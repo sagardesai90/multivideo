@@ -131,7 +131,7 @@ export default function VideoGrid() {
 
       {/* Responsive Video Grid - Always render all 4 videos, just resize with CSS */}
       <div 
-        className="flex-1 gap-1 bg-zinc-950 p-1"
+        className={`flex-1 gap-1 bg-zinc-950 p-1 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
         style={{
           display: 'grid',
           // Use orientation state for responsive layout
@@ -143,8 +143,9 @@ export default function VideoGrid() {
           gridTemplateRows: videoSlots.some(slot => slot.isExpanded) 
             ? '1fr 1fr 1fr' 
             : isPortrait 
-              ? '1fr 1fr 1fr 1fr' 
+              ? 'auto auto auto auto' 
               : '1fr 1fr',
+          gridAutoRows: isPortrait ? 'minmax(250px, auto)' : undefined,
         }}
       >
         {videoSlots.map((slot, index) => {
