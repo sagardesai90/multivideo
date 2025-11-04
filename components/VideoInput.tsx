@@ -23,17 +23,23 @@ export default function VideoInput({
     setSelectedQuadrant(focusedIndex);
   }, [focusedIndex]);
 
+  // Update input URL when selected quadrant changes
+  React.useEffect(() => {
+    const currentUrl = videoSlots[selectedQuadrant]?.url || '';
+    setInputUrl(currentUrl);
+  }, [selectedQuadrant, videoSlots]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputUrl.trim()) {
       onSetUrl(selectedQuadrant, inputUrl.trim());
-      setInputUrl('');
+      // Input will be updated by the useEffect to show the loaded URL
     }
   };
 
   const handleClear = () => {
     onSetUrl(selectedQuadrant, '');
-    setInputUrl('');
+    // Input will be cleared by the useEffect when videoSlots updates
   };
 
   return (
