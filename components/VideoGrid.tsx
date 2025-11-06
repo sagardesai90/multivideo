@@ -316,10 +316,24 @@ export default function VideoGrid() {
   };
 
   return (
-    <div className="w-screen h-screen bg-black flex flex-col overflow-hidden">
+    <div
+      className="w-full h-full bg-black flex flex-col overflow-hidden"
+      style={{
+        height: '100%',
+        minHeight: '-webkit-fill-available',
+      }}
+    >
       {/* URL Input Bar */}
       {!hideTopBar && (
-        <div className="bg-zinc-900 border-b border-zinc-800 p-4">
+        <div
+          className="bg-zinc-900 border-b border-zinc-800 p-4"
+          style={{
+            paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+            paddingBottom: '1rem',
+            paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+            paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
+          }}
+        >
           <VideoInput
             onSetUrl={handleSetUrl}
             focusedIndex={focusedIndex}
@@ -370,7 +384,10 @@ export default function VideoGrid() {
       {hideTopBar && showControlsButton && (
         <button
           onClick={() => setHideTopBar(false)}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-50 flex items-center gap-2"
+          className="absolute left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-50 flex items-center gap-2"
+          style={{
+            top: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+          }}
           title="Show controls"
         >
           <span>⬇️</span>
@@ -381,7 +398,11 @@ export default function VideoGrid() {
       {/* Responsive Video Grid with adjustable borders */}
       <div
         className={`flex-1 bg-zinc-950 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
-        style={{ position: 'relative' }}
+        style={{
+          position: 'relative',
+          // Extend to use all available vertical space, including safe areas
+          minHeight: 0, // Important for flex-1 to work correctly
+        }}
       >
         {/* Render VideoPlayers based on numSlots and single video mode */}
         {(() => {
@@ -390,13 +411,28 @@ export default function VideoGrid() {
             const index = focusedIndex;
             if (index < videoSlots.length) {
               return (
-                <div key={index} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '4px' }}>
+                <div
+                  key={index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingLeft: isPortrait ? 0 : '4px',
+                    paddingRight: isPortrait ? 0 : '4px',
+                    paddingTop: isPortrait ? '2px' : '4px',
+                    paddingBottom: isPortrait ? '2px' : '4px',
+                    boxSizing: 'border-box',
+                  }}
+                >
                   <VideoPlayer
                     key={`video-player-${index}`}
                     url={videoSlots[index].url}
                     quadrantIndex={index}
                     isFocused={true}
                     isExpanded={false}
+                    isAudioEnabled={true}
                     onFocus={() => setFocusedIndex(index)}
                     onToggleExpand={() => handleToggleExpand(index)}
                   />
@@ -415,19 +451,27 @@ export default function VideoGrid() {
             if (index >= videoSlots.length) return null;
 
             // Calculate position based on current layout mode and orientation
-            let style: React.CSSProperties = { position: 'absolute', padding: '4px' };
+            // In portrait mode, remove horizontal padding to fill full width
+            let style: React.CSSProperties;
 
             if (isPortrait) {
-              // Portrait mode: Stack vertically
+              // Portrait mode: Stack vertically - fill full width, minimal vertical padding
               const heightPercent = 100 / numSlots;
               style = {
-                ...style,
+                position: 'absolute',
                 top: `${index * heightPercent}%`,
                 left: 0,
                 right: 0,
-                height: `${heightPercent}%`
+                height: `${heightPercent}%`,
+                paddingLeft: 0,
+                paddingRight: 0,
+                paddingTop: '2px',
+                paddingBottom: '2px',
+                boxSizing: 'border-box',
               };
             } else if (layoutMode === 'split') {
+              // Landscape split mode
+              style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
               if (index === focusedIndex) {
                 // Top video (focused)
                 style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
@@ -446,6 +490,7 @@ export default function VideoGrid() {
               }
             } else if (anyExpanded) {
               // Expanded mode (works in both grid and expanded layout modes)
+              style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
               if (index === expandedIndex) {
                 // Left expanded video
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
@@ -463,6 +508,8 @@ export default function VideoGrid() {
                 };
               }
             } else {
+              // Grid mode
+              style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
               // Grid mode: calculate grid dimensions
               const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
               const rows = Math.ceil(numSlots / cols);
@@ -502,6 +549,7 @@ export default function VideoGrid() {
                   quadrantIndex={index}
                   isFocused={focusedIndex === index}
                   isExpanded={videoSlots[index].isExpanded}
+                  isAudioEnabled={focusedIndex === index}
                   onFocus={() => setFocusedIndex(index)}
                   onToggleExpand={() => handleToggleExpand(index)}
                 />
