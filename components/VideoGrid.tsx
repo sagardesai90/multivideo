@@ -19,6 +19,8 @@ export default function VideoGrid() {
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [hideTopBar, setHideTopBar] = useState<boolean>(false);
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
+  const [showControlsButton, setShowControlsButton] = useState<boolean>(true);
+  const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Track orientation changes
   useEffect(() => {
@@ -74,6 +76,47 @@ export default function VideoGrid() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Handle cursor inactivity to hide "Show Controls" button
+  useEffect(() => {
+    if (!hideTopBar) {
+      // If top bar is visible, always show the button (button is hidden anyway)
+      setShowControlsButton(true);
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+      return;
+    }
+
+    const resetInactivityTimer = () => {
+      // Show the button
+      setShowControlsButton(true);
+
+      // Clear existing timer
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+
+      // Set new timer to hide button after 7 seconds
+      inactivityTimerRef.current = setTimeout(() => {
+        setShowControlsButton(false);
+      }, 7000);
+    };
+
+    // Initialize timer
+    resetInactivityTimer();
+
+    // Add mouse move listener
+    window.addEventListener('mousemove', resetInactivityTimer);
+
+    return () => {
+      window.removeEventListener('mousemove', resetInactivityTimer);
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [hideTopBar]);
+
   const handleSetUrl = (quadrantIndex: number, url: string) => {
     setVideoSlots((slots) =>
       slots.map((slot, i) =>
@@ -118,10 +161,10 @@ export default function VideoGrid() {
       )}
       
       {/* Show/Hide Top Bar Button (when hidden) */}
-      {hideTopBar && (
+      {hideTopBar && showControlsButton && (
         <button
           onClick={() => setHideTopBar(false)}
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors z-50 flex items-center gap-2"
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-50 flex items-center gap-2"
           title="Show controls"
         >
           <span>⬇️</span>
