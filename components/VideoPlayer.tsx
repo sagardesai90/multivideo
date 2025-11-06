@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 interface VideoPlayerProps {
   url: string;
@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   isExpanded: boolean;
   onFocus: () => void;
   onToggleExpand: () => void;
+  isAudioEnabled?: boolean; // Only the focused video should have audio enabled
 }
 
 function detectVideoType(url: string): string {
@@ -42,38 +43,70 @@ function detectVideoType(url: string): string {
   return 'generic';
 }
 
-function getYouTubeEmbedUrl(url: string): string {
+function getYouTubeEmbedUrl(url: string, mute: boolean = false): string {
+  let videoId: string | null = null;
+  let baseUrl = '';
+  
   // Handle youtube.com/watch?v=VIDEO_ID
   const watchMatch = url.match(/[?&]v=([^&]+)/);
   if (watchMatch) {
-    return `https://www.youtube.com/embed/${watchMatch[1]}`;
-  }
-  
+    videoId = watchMatch[1];
+    baseUrl = `https://www.youtube.com/embed/${videoId}`;
+  } 
   // Handle youtu.be/VIDEO_ID
-  const shortMatch = url.match(/youtu\.be\/([^?]+)/);
-  if (shortMatch) {
-    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  else {
+    const shortMatch = url.match(/youtu\.be\/([^?]+)/);
+    if (shortMatch) {
+      videoId = shortMatch[1];
+      baseUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+    // Handle youtube.com/embed/VIDEO_ID (already embed URL)
+    else if (url.includes('/embed/')) {
+      baseUrl = url.split('?')[0]; // Get base URL without params
+      videoId = baseUrl.split('/embed/')[1];
+    }
+    else {
+      return url;
+    }
   }
   
-  // Handle youtube.com/embed/VIDEO_ID (already embed URL)
-  if (url.includes('/embed/')) {
-    return url;
+  // Add parameters
+  const params = new URLSearchParams();
+  if (mute) {
+    params.set('mute', '1');
   }
+  // Preserve existing parameters from original URL if any
+  const originalParams = new URLSearchParams(url.split('?')[1] || '');
+  originalParams.forEach((value, key) => {
+    if (key !== 'mute') { // Don't override mute param
+      params.set(key, value);
+    }
+  });
   
-  return url;
+  const paramString = params.toString();
+  return paramString ? `${baseUrl}?${paramString}` : baseUrl;
 }
 
-function getTwitchEmbedUrl(url: string): string {
+function getTwitchEmbedUrl(url: string, mute: boolean = false): string {
+  const params = new URLSearchParams();
+  if (mute) {
+    params.set('muted', 'true');
+  }
+  
   // Handle twitch.tv/channelname
   const channelMatch = url.match(/twitch\.tv\/([^/?]+)/);
   if (channelMatch && !url.includes('/videos/')) {
-    return `https://player.twitch.tv/?channel=${channelMatch[1]}&parent=${window.location.hostname}`;
+    params.set('channel', channelMatch[1]);
+    params.set('parent', window.location.hostname);
+    return `https://player.twitch.tv/?${params.toString()}`;
   }
   
   // Handle twitch.tv/videos/VIDEO_ID
   const videoMatch = url.match(/videos\/(\d+)/);
   if (videoMatch) {
-    return `https://player.twitch.tv/?video=${videoMatch[1]}&parent=${window.location.hostname}`;
+    params.set('video', videoMatch[1]);
+    params.set('parent', window.location.hostname);
+    return `https://player.twitch.tv/?${params.toString()}`;
   }
   
   return url;
@@ -86,14 +119,22 @@ export default function VideoPlayer({
   isExpanded,
   onFocus,
   onToggleExpand,
+  isAudioEnabled = true,
 }: VideoPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
   const [useProxy, setUseProxy] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [showMutedIndicator, setShowMutedIndicator] = useState(false);
+  const [isPortrait, setIsPortrait] = useState<boolean>(false);
+  const [showExpandButton, setShowExpandButton] = useState(false);
+  const [showProxiedLabel, setShowProxiedLabel] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const proxiedLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoType = detectVideoType(url);
   
   // Get proxy URL
@@ -101,11 +142,68 @@ export default function VideoPlayer({
     return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   };
   
+  // Track orientation changes
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsPortrait(window.matchMedia('(orientation: portrait)').matches);
+    };
+
+    // Check on mount
+    checkOrientation();
+
+    // Listen for orientation changes
+    const mediaQuery = window.matchMedia('(orientation: portrait)');
+    const handler = () => checkOrientation();
+
+    mediaQuery.addEventListener('change', handler);
+    window.addEventListener('resize', checkOrientation);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handler);
+      window.removeEventListener('resize', checkOrientation);
+    };
+  }, []);
+  
   // Reset state when URL changes
   React.useEffect(() => {
     setIframeBlocked(false);
     setUseProxy(false);
+    setShowProxiedLabel(false);
+    // Clear proxied label timer
+    if (proxiedLabelTimerRef.current) {
+      clearTimeout(proxiedLabelTimerRef.current);
+      proxiedLabelTimerRef.current = null;
+    }
   }, [url, videoType, quadrantIndex]);
+  
+  // Show proxied label when proxy is enabled, then hide after 2.5 seconds
+  useEffect(() => {
+    // Clear any existing timer
+    if (proxiedLabelTimerRef.current) {
+      clearTimeout(proxiedLabelTimerRef.current);
+      proxiedLabelTimerRef.current = null;
+    }
+    
+    if (useProxy && (videoType === 'streaming-site' || videoType === 'generic')) {
+      // Show the label when proxy is enabled
+      setShowProxiedLabel(true);
+      
+      // Hide after 2.5 seconds
+      proxiedLabelTimerRef.current = setTimeout(() => {
+        setShowProxiedLabel(false);
+      }, 2500);
+    } else {
+      // Hide immediately when proxy is disabled
+      setShowProxiedLabel(false);
+    }
+    
+    return () => {
+      if (proxiedLabelTimerRef.current) {
+        clearTimeout(proxiedLabelTimerRef.current);
+        proxiedLabelTimerRef.current = null;
+      }
+    };
+  }, [useProxy, videoType]);
 
   // Check if iframe is blocked by X-Frame-Options
   useEffect(() => {
@@ -130,19 +228,90 @@ export default function VideoPlayer({
     }
   }, [url, videoType, quadrantIndex]);
 
-  // Get embed URL based on video type
-  const getEmbedUrl = () => {
+  // Get embed URL based on video type - recalculate when isAudioEnabled changes
+  const embedUrl = useMemo(() => {
+    if (!url) return '';
+    const shouldMute = !isAudioEnabled;
     switch (videoType) {
       case 'youtube':
-        return getYouTubeEmbedUrl(url);
+        return getYouTubeEmbedUrl(url, shouldMute);
       case 'twitch':
-        return getTwitchEmbedUrl(url);
+        return getTwitchEmbedUrl(url, shouldMute);
       default:
         return url;
     }
-  };
-
-  const embedUrl = url ? getEmbedUrl() : '';
+  }, [url, videoType, isAudioEnabled]);
+  
+  // Handle muting for video elements (HLS, direct video files)
+  useEffect(() => {
+    if (videoRef.current && (videoType === 'hls' || videoType === 'video')) {
+      videoRef.current.muted = !isAudioEnabled;
+      if (!isAudioEnabled) {
+        videoRef.current.volume = 0;
+      } else {
+        videoRef.current.volume = 1;
+      }
+    }
+  }, [isAudioEnabled, videoType, url]);
+  
+  // Handle muting for generic iframes via postMessage (for proxy-based streaming sites)
+  useEffect(() => {
+    if (iframeRef.current && (videoType === 'streaming-site' || videoType === 'generic') && useProxy) {
+      // Send mute message to iframe (proxy route has message listener)
+      const sendMuteMessage = () => {
+        if (iframeRef.current?.contentWindow) {
+          iframeRef.current.contentWindow.postMessage(
+            { type: 'MUTE_VIDEO', muted: !isAudioEnabled },
+            '*'
+          );
+        }
+      };
+      
+      // Send immediately
+      sendMuteMessage();
+      
+      // Also send after a delay to ensure iframe is fully loaded
+      const timer = setTimeout(sendMuteMessage, 1000);
+      
+      // Listen for iframe load events
+      const iframe = iframeRef.current;
+      iframe.addEventListener('load', sendMuteMessage);
+      
+      return () => {
+        clearTimeout(timer);
+        iframe.removeEventListener('load', sendMuteMessage);
+      };
+    }
+  }, [isAudioEnabled, videoType, useProxy]);
+  
+  // Show muted indicator when video becomes muted, then hide after 5 seconds
+  useEffect(() => {
+    // Clear any existing timer
+    if (mutedTimerRef.current) {
+      clearTimeout(mutedTimerRef.current);
+      mutedTimerRef.current = null;
+    }
+    
+    if (!isAudioEnabled) {
+      // Show the indicator when video becomes muted
+      setShowMutedIndicator(true);
+      
+      // Hide it after 5 seconds
+      mutedTimerRef.current = setTimeout(() => {
+        setShowMutedIndicator(false);
+      }, 5000);
+    } else {
+      // Hide immediately when audio is enabled
+      setShowMutedIndicator(false);
+    }
+    
+    return () => {
+      if (mutedTimerRef.current) {
+        clearTimeout(mutedTimerRef.current);
+        mutedTimerRef.current = null;
+      }
+    };
+  }, [isAudioEnabled]);
 
   // HLS Stream Support
   useEffect(() => {
@@ -209,17 +378,73 @@ export default function VideoPlayer({
     };
   }, [url, videoType, quadrantIndex]);
 
-  // Check for Netflix
+  // Handle expand button visibility - show for a few seconds on hover/interaction, hide in portrait
+  // IMPORTANT: This must be called before any early returns to follow Rules of Hooks
+  useEffect(() => {
+    // Clear any existing timer
+    if (expandButtonTimerRef.current) {
+      clearTimeout(expandButtonTimerRef.current);
+      expandButtonTimerRef.current = null;
+    }
+    
+    // Don't show expand button in portrait mode
+    if (isPortrait) {
+      setShowExpandButton(false);
+      return;
+    }
+    
+    // Show expand button on hover/interaction
+    if (isHovered && !error && url) {
+      setShowExpandButton(true);
+      
+      // Hide after 5 seconds
+      expandButtonTimerRef.current = setTimeout(() => {
+        setShowExpandButton(false);
+      }, 5000);
+    } else {
+      // Hide immediately when not hovered
+      setShowExpandButton(false);
+    }
+    
+    return () => {
+      if (expandButtonTimerRef.current) {
+        clearTimeout(expandButtonTimerRef.current);
+        expandButtonTimerRef.current = null;
+      }
+    };
+  }, [isHovered, isPortrait, error, url]);
+  
+  // Also show expand button on touch/interaction (for mobile)
+  const handleInteraction = () => {
+    if (!isPortrait && !error && url) {
+      setShowExpandButton(true);
+      // Clear existing timer
+      if (expandButtonTimerRef.current) {
+        clearTimeout(expandButtonTimerRef.current);
+      }
+      // Hide after 5 seconds
+      expandButtonTimerRef.current = setTimeout(() => {
+        setShowExpandButton(false);
+      }, 5000);
+    }
+  };
+
+  // Check for Netflix - MUST be after all hooks
   if (videoType === 'netflix') {
     return (
       <div
-        className="relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all"
+        className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
       >
-        <div className="text-center p-8">
-          <p className="text-red-500 text-lg font-semibold mb-2">⚠️ Netflix Not Supported</p>
-          <p className="text-zinc-400 text-sm">
-            Netflix content cannot be embedded due to DRM restrictions.
+        <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-red-900/20 flex items-center justify-center flex-shrink-0">
+            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h3 className="text-white text-sm font-medium mb-1 px-2">Netflix Not Supported</h3>
+          <p className="text-zinc-400 text-xs leading-tight px-2">
+            DRM prevents embedding
           </p>
         </div>
       </div>
@@ -229,12 +454,14 @@ export default function VideoPlayer({
   if (!url) {
     return (
       <div
-        className="relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all"
+        className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
       >
-        <div className="text-center p-8">
-          <p className="text-zinc-500 text-lg mb-2">Quadrant {quadrantIndex + 1}</p>
-          <p className="text-zinc-600 text-sm">Paste a video URL above to start watching</p>
+        <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
+            <span className="text-zinc-500 text-base font-semibold">{quadrantIndex + 1}</span>
+          </div>
+          <p className="text-zinc-400 text-xs">Empty slot</p>
         </div>
       </div>
     );
@@ -243,91 +470,153 @@ export default function VideoPlayer({
   return (
     <div
       className="relative w-full h-full bg-black cursor-pointer transition-all"
-      onClick={onFocus}
+      onClick={(e) => {
+        onFocus();
+        handleInteraction();
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleInteraction}
     >
       {error ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-          <div className="text-center p-8 max-w-2xl">
-            <p className="text-red-500 text-lg font-semibold mb-2">⚠️ Error Loading Video</p>
-            <p className="text-zinc-400 text-sm mb-4">{error}</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+          <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full overflow-y-auto">
+            <div className="mb-3 flex-shrink-0">
+              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-red-900/20 flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-white text-sm font-semibold mb-1 px-2">Error Loading Video</h3>
+              <p className="text-zinc-400 text-xs leading-tight px-2 line-clamp-2">{error}</p>
+            </div>
             
             {error.includes('CORS') && (
-              <div className="bg-zinc-800 rounded-lg p-4 mt-4 text-left">
-                <p className="text-yellow-500 text-xs font-semibold mb-2">💡 Possible Solutions:</p>
-                <ul className="text-zinc-500 text-xs space-y-1 list-disc list-inside">
-                  <li>Install a CORS unblock browser extension (e.g., "Allow CORS")</li>
-                  <li>Use the streaming site directly in a separate window</li>
-                  <li>Try finding public/non-restricted HLS streams</li>
-                  <li>Some streams only work on their original site</li>
+              <div className="bg-zinc-800/50 rounded-lg p-3 mt-2 text-left border border-zinc-700/50 flex-shrink-0 w-full max-w-[90%]">
+                <p className="text-zinc-300 text-xs font-medium mb-1.5">Possible solutions:</p>
+                <ul className="text-zinc-400 text-xs space-y-1">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-zinc-500 mt-0.5 flex-shrink-0">•</span>
+                    <span>Install CORS extension</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-zinc-500 mt-0.5 flex-shrink-0">•</span>
+                    <span>Try site directly</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-zinc-500 mt-0.5 flex-shrink-0">•</span>
+                    <span>Use public HLS streams</span>
+                  </li>
                 </ul>
               </div>
             )}
           </div>
         </div>
       ) : videoType === 'youtube' || videoType === 'twitch' ? (
-        <iframe
-          src={embedUrl}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-          style={{ border: 'none', overflow: 'hidden' }}
-          title={`Video player ${quadrantIndex + 1}`}
-        />
+        <div className="relative w-full h-full" style={{ overflow: 'hidden', width: '100%', height: '100%' }}>
+          <iframe
+            key={embedUrl} // Force re-render when URL changes (important for mute param)
+            src={embedUrl}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            style={{ 
+              border: 'none', 
+              overflow: 'hidden',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+            title={`Video player ${quadrantIndex + 1}`}
+          />
+          {showMutedIndicator && (
+            <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+              🔇 Muted
+            </div>
+          )}
+        </div>
       ) : videoType === 'hls' ? (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full" style={{ overflow: 'hidden' }}>
           <video
             ref={videoRef}
             controls
+            muted={!isAudioEnabled}
             className="w-full h-full"
-            style={{ objectFit: 'contain', backgroundColor: '#000' }}
+            style={{ 
+              objectFit: 'cover', 
+              backgroundColor: '#000',
+              width: '100%',
+              height: '100%',
+            }}
           />
           {isHovered && (
             <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
               🔴 LIVE
             </div>
           )}
+          {showMutedIndicator && (
+            <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+              🔇 Muted
+            </div>
+          )}
         </div>
       ) : videoType === 'video' ? (
-        <video
-          src={url}
-          controls
-          className="w-full h-full"
-          style={{ objectFit: 'contain' }}
-        />
+        <div className="relative w-full h-full" style={{ overflow: 'hidden' }}>
+          <video
+            ref={videoRef}
+            src={url}
+            controls
+            muted={!isAudioEnabled}
+            className="w-full h-full"
+            style={{ 
+              objectFit: 'cover',
+              width: '100%',
+              height: '100%',
+            }}
+          />
+          {showMutedIndicator && (
+            <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+              🔇 Muted
+            </div>
+          )}
+        </div>
       ) : videoType === 'streaming-site' ? (
         <div className="relative w-full h-full">
           {iframeBlocked ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-              <div className="text-center p-8 max-w-lg">
-                <p className="text-orange-500 text-lg font-semibold mb-3">🚫 Embedding Blocked</p>
-                <p className="text-zinc-300 text-sm mb-4">
-                  This streaming site prevents embedding with X-Frame-Options.
-                </p>
-                <div className="flex gap-3 justify-center mb-4">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+              <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
+                <div className="mb-3 flex-shrink-0">
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/50 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-white text-sm font-semibold mb-1 px-2">Embedding Restricted</h3>
+                  <p className="text-zinc-400 text-xs leading-tight px-2">
+                    Site prevents embedded playback
+                  </p>
+                </div>
+                <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
                     onClick={() => {
                       setUseProxy(true);
                       setIframeBlocked(false);
                     }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-1.5"
                   >
-                    🔄 Try Proxy
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Try Proxy</span>
                   </button>
                   <button
                     onClick={() => window.open(url, '_blank')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-zinc-700 flex items-center justify-center gap-1.5"
                   >
-                    🔗 Open in New Window
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>New Tab</span>
                   </button>
-                </div>
-                <div className="bg-zinc-800 rounded-lg p-4 text-left">
-                  <p className="text-zinc-400 text-xs font-semibold mb-2">💡 Options:</p>
-                  <ul className="text-zinc-500 text-xs space-y-1 list-disc list-inside">
-                    <li><strong>Try Proxy:</strong> Routes the page through a proxy server to bypass X-Frame-Options</li>
-                    <li><strong>Open in New Window:</strong> Watch in a separate browser tab</li>
-                    <li><strong>Extract .m3u8:</strong> Find the direct stream URL in Network tab</li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -342,9 +631,19 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
-              {isHovered && (
+              {showProxiedLabel && useProxy && (
+                <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+                  🔄 PROXIED
+                </div>
+              )}
+              {isHovered && !useProxy && (
                 <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
-                  {useProxy ? '🔄 PROXIED' : '🌐 STREAMING SITE'}
+                  🌐 STREAMING SITE
+                </div>
+              )}
+              {showMutedIndicator && (
+                <div className={`absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300 ${showMutedIndicator ? 'opacity-100' : 'opacity-0'}`}>
+                  🔇 Muted
                 </div>
               )}
             </>
@@ -354,36 +653,41 @@ export default function VideoPlayer({
         // Try embedding generic URLs as iframes (might be streaming sites)
         <div className="relative w-full h-full">
           {iframeBlocked ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-              <div className="text-center p-8 max-w-lg">
-                <p className="text-orange-500 text-lg font-semibold mb-3">🚫 Embedding Blocked</p>
-                <p className="text-zinc-300 text-sm mb-4">
-                  This site prevents embedding with X-Frame-Options.
-                </p>
-                <div className="flex gap-3 justify-center mb-4">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+              <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
+                <div className="mb-3 flex-shrink-0">
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/50 flex items-center justify-center">
+                    <svg className="w-6 h-6 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-white text-sm font-semibold mb-1 px-2">Embedding Restricted</h3>
+                  <p className="text-zinc-400 text-xs leading-tight px-2">
+                    Site prevents embedded playback
+                  </p>
+                </div>
+                <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
                     onClick={() => {
                       setUseProxy(true);
                       setIframeBlocked(false);
                     }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-1.5"
                   >
-                    🔄 Try Proxy
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Try Proxy</span>
                   </button>
                   <button
                     onClick={() => window.open(url, '_blank')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-zinc-700 flex items-center justify-center gap-1.5"
                   >
-                    🔗 Open in New Window
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>New Tab</span>
                   </button>
-                </div>
-                <div className="bg-zinc-800 rounded-lg p-4 text-left">
-                  <p className="text-zinc-400 text-xs font-semibold mb-2">💡 Options:</p>
-                  <ul className="text-zinc-500 text-xs space-y-1 list-disc list-inside">
-                    <li><strong>Try Proxy:</strong> Routes through proxy to bypass restrictions</li>
-                    <li><strong>Open in New Window:</strong> Watch in separate tab</li>
-                    <li>Extract .m3u8 URL for direct HLS playback</li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -398,38 +702,48 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
-              {isHovered && (
+              {showProxiedLabel && useProxy && (
+                <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+                  🔄 PROXIED
+                </div>
+              )}
+              {isHovered && !useProxy && (
                 <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
-                  {useProxy ? '🔄 PROXIED' : '🌐 WEB PAGE'}
+                  🌐 WEB PAGE
+                </div>
+              )}
+              {showMutedIndicator && (
+                <div className={`absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300 ${showMutedIndicator ? 'opacity-100' : 'opacity-0'}`}>
+                  🔇 Muted
                 </div>
               )}
             </>
           )}
         </div>
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
-          <div className="text-center p-8">
-            <p className="text-yellow-500 text-lg font-semibold mb-2">⚠️ No URL Provided</p>
-            <p className="text-zinc-400 text-sm mb-4">
-              Paste a video URL above to start watching
-            </p>
-            <p className="text-zinc-500 text-xs mb-4">
-              ✅ Supported: YouTube, Twitch, CrackStreams, StreamEast, HLS (.m3u8), MP4/WebM/OGG
-            </p>
-            <p className="text-zinc-600 text-xs italic">
-              Any HTTP/HTTPS URL will be attempted
+        <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
+          <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-white text-sm font-medium mb-1 px-2">No Video URL</h3>
+            <p className="text-zinc-400 text-xs leading-tight px-2">
+              Paste URL above to start
             </p>
           </div>
         </div>
       )}
 
-      {/* Expand/Collapse Button - Shows on hover */}
-      {isHovered && !error && url && (
+      {/* Expand/Collapse Button - Shows on hover/interaction for a few seconds (hidden in portrait) */}
+      {showExpandButton && (
         <button
-          className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all z-10 shadow-lg"
+          className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-10 shadow-lg"
           onClick={(e) => {
             e.stopPropagation();
             onToggleExpand();
+            handleInteraction(); // Reset timer on click
           }}
         >
           {isExpanded ? '◱ Normal' : '⛶ Expand'}
