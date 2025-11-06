@@ -160,7 +160,7 @@ export default function VideoInput({
           <button
             type="button"
             onClick={onAddSlot}
-            disabled={numSlots >= 8}
+            disabled={numSlots >= 9}
             className="w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed flex-shrink-0"
             title="Add quadrant"
           >

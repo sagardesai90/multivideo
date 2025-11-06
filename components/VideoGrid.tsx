@@ -61,7 +61,7 @@ export default function VideoGrid() {
     if (savedNumSlots) {
       try {
         const parsed = parseInt(savedNumSlots, 10);
-        if (parsed >= 1 && parsed <= 8) {
+        if (parsed >= 1 && parsed <= 9) {
           setNumSlots(parsed);
         }
       } catch (e) {
@@ -158,7 +158,7 @@ export default function VideoGrid() {
   }, [numSlots]);
 
   const handleAddSlot = () => {
-    if (numSlots < 8) {
+    if (numSlots < 9) {
       setNumSlots(numSlots + 1);
     }
   };
@@ -468,7 +468,7 @@ export default function VideoGrid() {
               const rows = Math.ceil(numSlots / cols);
               const row = Math.floor(index / cols);
               const col = index % cols;
-              
+
               if (numSlots === 1) {
                 style = { ...style, top: 0, left: 0, right: 0, bottom: 0 };
               } else if (numSlots === 2) {
