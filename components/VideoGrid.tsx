@@ -356,6 +356,12 @@ export default function VideoGrid() {
               }
             }}
             onResetLayout={handleResetLayout}
+            numSlots={numSlots}
+            onAddSlot={handleAddSlot}
+            onRemoveSlot={handleRemoveSlot}
+            singleVideoMode={singleVideoMode}
+            onToggleSingleVideoMode={() => setSingleVideoMode(!singleVideoMode)}
+            onFocusChange={setFocusedIndex}
           />
         </div>
       )}
@@ -377,18 +383,43 @@ export default function VideoGrid() {
         className={`flex-1 bg-zinc-950 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
         style={{ position: 'relative' }}
       >
-        {/* Always render all 4 VideoPlayers with stable positions */}
+        {/* Render VideoPlayers based on numSlots and single video mode */}
         {(() => {
+          // Single video mode: show only focused video fullscreen
+          if (singleVideoMode) {
+            const index = focusedIndex;
+            if (index < videoSlots.length) {
+              return (
+                <div key={index} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '4px' }}>
+                  <VideoPlayer
+                    key={`video-player-${index}`}
+                    url={videoSlots[index].url}
+                    quadrantIndex={index}
+                    isFocused={true}
+                    isExpanded={false}
+                    onFocus={() => setFocusedIndex(index)}
+                    onToggleExpand={() => handleToggleExpand(index)}
+                  />
+                </div>
+              );
+            }
+            return null;
+          }
+
+          // Multi-video mode: render all slots
           const anyExpanded = videoSlots.some(s => s.isExpanded);
           const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
+          const slotsToRender = Array.from({ length: numSlots }, (_, i) => i);
 
-          return [0, 1, 2, 3].map((index) => {
+          return slotsToRender.map((index) => {
+            if (index >= videoSlots.length) return null;
+
             // Calculate position based on current layout mode and orientation
             let style: React.CSSProperties = { position: 'absolute', padding: '4px' };
 
             if (isPortrait) {
               // Portrait mode: Stack vertically
-              const heightPercent = 25; // 100% / 4 videos
+              const heightPercent = 100 / numSlots;
               style = {
                 ...style,
                 top: `${index * heightPercent}%`,
@@ -401,10 +432,10 @@ export default function VideoGrid() {
                 // Top video (focused)
                 style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
               } else {
-                // Bottom 3 videos
-                const otherIndices = [0, 1, 2, 3].filter(i => i !== focusedIndex);
+                // Bottom videos
+                const otherIndices = slotsToRender.filter(i => i !== focusedIndex);
                 const bottomPos = otherIndices.indexOf(index);
-                const widthPercent = 100 / 3;
+                const widthPercent = 100 / Math.max(1, otherIndices.length);
                 style = {
                   ...style,
                   top: `${splitHorizontalSplit}%`,
@@ -420,9 +451,9 @@ export default function VideoGrid() {
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
               } else {
                 // Right stacked videos
-                const otherIndices = [0, 1, 2, 3].filter(i => i !== expandedIndex);
+                const otherIndices = slotsToRender.filter(i => i !== expandedIndex);
                 const stackPos = otherIndices.indexOf(index);
-                const heightPercent = 100 / 3;
+                const heightPercent = 100 / Math.max(1, otherIndices.length);
                 style = {
                   ...style,
                   top: `${stackPos * heightPercent}%`,
@@ -432,16 +463,35 @@ export default function VideoGrid() {
                 };
               }
             } else {
-              // Grid mode: 2x2
-              const row = Math.floor(index / 2);
-              const col = index % 2;
-              style = {
-                ...style,
-                top: row === 0 ? 0 : `${gridHorizontalSplit}%`,
-                left: col === 0 ? 0 : `${gridVerticalSplit}%`,
-                width: col === 0 ? `${gridVerticalSplit}%` : `${100 - gridVerticalSplit}%`,
-                height: row === 0 ? `${gridHorizontalSplit}%` : `${100 - gridHorizontalSplit}%`
-              };
+              // Grid mode: calculate grid dimensions
+              const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
+              const rows = Math.ceil(numSlots / cols);
+              const row = Math.floor(index / cols);
+              const col = index % cols;
+              
+              if (numSlots === 1) {
+                style = { ...style, top: 0, left: 0, right: 0, bottom: 0 };
+              } else if (numSlots === 2) {
+                // Two videos side by side
+                style = {
+                  ...style,
+                  top: 0,
+                  bottom: 0,
+                  left: col === 0 ? 0 : `${gridVerticalSplit}%`,
+                  width: col === 0 ? `${gridVerticalSplit}%` : `${100 - gridVerticalSplit}%`
+                };
+              } else {
+                // Grid with multiple videos
+                const widthPercent = 100 / cols;
+                const heightPercent = 100 / rows;
+                style = {
+                  ...style,
+                  top: `${row * heightPercent}%`,
+                  left: `${col * widthPercent}%`,
+                  width: `${widthPercent}%`,
+                  height: `${heightPercent}%`
+                };
+              }
             }
 
             return (
@@ -457,11 +507,11 @@ export default function VideoGrid() {
                 />
               </div>
             );
-          });
+          }).filter(Boolean);
         })()}
 
-        {/* Render splitters on top (only in landscape mode) */}
-        {!isPortrait && layoutMode === 'split' && (
+        {/* Render splitters on top (only in landscape mode and not single video mode) */}
+        {!singleVideoMode && !isPortrait && layoutMode === 'split' && numSlots > 1 && (
           <div style={{ position: 'absolute', top: `${splitHorizontalSplit}%`, left: 0, right: 0, transform: 'translateY(-50%)', zIndex: 1000 }}>
             <Splitter
               direction="horizontal"
@@ -476,7 +526,7 @@ export default function VideoGrid() {
           </div>
         )}
 
-        {!isPortrait && videoSlots.some(s => s.isExpanded) && layoutMode !== 'split' && (
+        {!singleVideoMode && !isPortrait && videoSlots.some(s => s.isExpanded) && layoutMode !== 'split' && numSlots > 1 && (
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
             <Splitter
               direction="vertical"
@@ -491,33 +541,19 @@ export default function VideoGrid() {
           </div>
         )}
 
-        {!isPortrait && !videoSlots.some(s => s.isExpanded) && layoutMode === 'grid' && (
-          <>
-            <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${gridVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
-              <Splitter
-                direction="vertical"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerWidth = container.clientWidth;
-                  const deltaPercent = (delta / containerWidth) * 100;
-                  setGridVerticalSplit(Math.max(20, Math.min(80, gridVerticalSplit + deltaPercent)));
-                }}
-              />
-            </div>
-            <div style={{ position: 'absolute', top: `${gridHorizontalSplit}%`, left: 0, right: 0, transform: 'translateY(-50%)', zIndex: 1000 }}>
-              <Splitter
-                direction="horizontal"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerHeight = container.clientHeight;
-                  const deltaPercent = (delta / containerHeight) * 100;
-                  setGridHorizontalSplit(Math.max(20, Math.min(80, gridHorizontalSplit + deltaPercent)));
-                }}
-              />
-            </div>
-          </>
+        {!singleVideoMode && !isPortrait && !videoSlots.some(s => s.isExpanded) && layoutMode === 'grid' && numSlots === 2 && (
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${gridVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            <Splitter
+              direction="vertical"
+              onDrag={(delta) => {
+                const container = document.querySelector('.flex-1') as HTMLElement;
+                if (!container) return;
+                const containerWidth = container.clientWidth;
+                const deltaPercent = (delta / containerWidth) * 100;
+                setGridVerticalSplit(Math.max(20, Math.min(80, gridVerticalSplit + deltaPercent)));
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
