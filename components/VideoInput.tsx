@@ -10,6 +10,12 @@ interface VideoInputProps {
   layoutMode: 'grid' | 'expanded' | 'split';
   onToggleLayout: () => void;
   onResetLayout: () => void;
+  numSlots: number;
+  onAddSlot: () => void;
+  onRemoveSlot: () => void;
+  singleVideoMode: boolean;
+  onToggleSingleVideoMode: () => void;
+  onFocusChange?: (index: number) => void;
 }
 
 export default function VideoInput({
@@ -20,6 +26,12 @@ export default function VideoInput({
   layoutMode,
   onToggleLayout,
   onResetLayout,
+  numSlots,
+  onAddSlot,
+  onRemoveSlot,
+  singleVideoMode,
+  onToggleSingleVideoMode,
+  onFocusChange,
 }: VideoInputProps) {
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
@@ -27,13 +39,17 @@ export default function VideoInput({
 
   // Update selected quadrant when focused index changes
   React.useEffect(() => {
-    setSelectedQuadrant(focusedIndex);
-  }, [focusedIndex]);
+    if (focusedIndex < numSlots) {
+      setSelectedQuadrant(focusedIndex);
+    }
+  }, [focusedIndex, numSlots]);
 
   // Update input URL when selected quadrant changes
   React.useEffect(() => {
-    const currentUrl = videoSlots[selectedQuadrant]?.url || '';
-    setInputUrl(currentUrl);
+    if (selectedQuadrant < videoSlots.length) {
+      const currentUrl = videoSlots[selectedQuadrant]?.url || '';
+      setInputUrl(currentUrl);
+    }
   }, [selectedQuadrant, videoSlots]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -125,13 +141,55 @@ export default function VideoInput({
           ↺
         </button>
 
+        {/* Single Video Mode Toggle */}
+        <button
+          type="button"
+          onClick={onToggleSingleVideoMode}
+          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${
+            singleVideoMode
+              ? 'bg-green-600 text-white ring-2 ring-green-400'
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+          }`}
+          title={singleVideoMode ? 'Single video mode (click to disable)' : 'Single video mode (click to enable)'}
+        >
+          🎬
+        </button>
+
+        {/* Add/Remove Slot Buttons */}
+        <div className="flex gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onAddSlot}
+            disabled={numSlots >= 8}
+            className="w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed flex-shrink-0"
+            title="Add quadrant"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={onRemoveSlot}
+            disabled={numSlots <= 1}
+            className="w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed flex-shrink-0"
+            title="Remove quadrant"
+          >
+            −
+          </button>
+        </div>
+
         {/* Quadrant Selector */}
         <div className="flex gap-2 flex-shrink-0">
-          {[0, 1, 2, 3].map((index) => (
+          {Array.from({ length: numSlots }, (_, i) => i).map((index) => (
             <button
               key={index}
               type="button"
-              onClick={() => setSelectedQuadrant(index)}
+              onClick={() => {
+                setSelectedQuadrant(index);
+                // In single video mode, immediately switch the focused video
+                if (singleVideoMode && onFocusChange) {
+                  onFocusChange(index);
+                }
+              }}
               className={`w-10 h-10 rounded-lg font-semibold transition-all ${
                 selectedQuadrant === index
                   ? 'bg-zinc-700 text-white ring-2 ring-zinc-600'
