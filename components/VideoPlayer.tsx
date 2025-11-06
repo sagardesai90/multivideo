@@ -213,9 +213,7 @@ export default function VideoPlayer({
   if (videoType === 'netflix') {
     return (
       <div
-        className={`relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all ${
-          isFocused ? 'ring-4 ring-green-500' : ''
-        }`}
+        className="relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
       >
         <div className="text-center p-8">
@@ -231,9 +229,7 @@ export default function VideoPlayer({
   if (!url) {
     return (
       <div
-        className={`relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all ${
-          isFocused ? 'ring-4 ring-green-500' : ''
-        }`}
+        className="relative w-full h-full bg-zinc-900 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
       >
         <div className="text-center p-8">
@@ -246,9 +242,7 @@ export default function VideoPlayer({
 
   return (
     <div
-      className={`relative w-full h-full bg-black cursor-pointer transition-all ${
-        isFocused ? 'ring-4 ring-green-500' : ''
-      }`}
+      className="relative w-full h-full bg-black cursor-pointer transition-all"
       onClick={onFocus}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
