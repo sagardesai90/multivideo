@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MultiVideo - Watch Multiple Streams",
   description: "Watch multiple video streams simultaneously in a 2x2 grid layout",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: 'cover', // Enables safe area insets for iOS devices
+  },
 };
 
 export default function RootLayout({

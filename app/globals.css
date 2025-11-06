@@ -27,6 +27,13 @@ body {
   background: #000000;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Use full viewport height, extending into safe areas for maximum space */
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  min-height: -webkit-fill-available;
+  /* Extend into safe areas - videos can use full screen */
+  width: 100vw;
+  width: 100dvw; /* Dynamic viewport width for mobile browsers */
 }
 
 /* Responsive grid layout based on orientation */
