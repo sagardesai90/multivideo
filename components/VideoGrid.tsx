@@ -259,6 +259,24 @@ export default function VideoGrid() {
     };
   }, [hideTopBar]);
 
+  // Handle tap anywhere on screen to show controls button (mobile)
+  const handleScreenTap = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!hideTopBar) return; // Only work when top bar is hidden
+
+    // Show the button on any tap
+    setShowControlsButton(true);
+
+    // Reset inactivity timer
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    // Set timer to hide button after 7 seconds
+    inactivityTimerRef.current = setTimeout(() => {
+      setShowControlsButton(false);
+    }, 7000);
+  };
+
   const handleSetUrl = (quadrantIndex: number, url: string) => {
     setVideoSlots((slots) =>
       slots.map((slot, i) =>
@@ -403,6 +421,8 @@ export default function VideoGrid() {
           // Extend to use all available vertical space, including safe areas
           minHeight: 0, // Important for flex-1 to work correctly
         }}
+        onTouchStart={handleScreenTap}
+        onClick={handleScreenTap}
       >
         {/* Render VideoPlayers based on numSlots and single video mode */}
         {(() => {
