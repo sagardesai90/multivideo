@@ -7,6 +7,9 @@ interface VideoInputProps {
   focusedIndex: number;
   videoSlots: { url: string; isExpanded: boolean }[];
   onToggleTopBar: () => void;
+  layoutMode: 'grid' | 'expanded' | 'split';
+  onToggleLayout: () => void;
+  onResetLayout: () => void;
 }
 
 export default function VideoInput({
@@ -14,9 +17,13 @@ export default function VideoInput({
   focusedIndex,
   videoSlots,
   onToggleTopBar,
+  layoutMode,
+  onToggleLayout,
+  onResetLayout,
 }: VideoInputProps) {
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
+  const [showCopied, setShowCopied] = useState(false);
 
   // Update selected quadrant when focused index changes
   React.useEffect(() => {
@@ -42,6 +49,27 @@ export default function VideoInput({
     // Input will be cleared by the useEffect when videoSlots updates
   };
 
+  const handleShare = async () => {
+    // Create URL with video links encoded
+    const params = new URLSearchParams();
+    videoSlots.forEach((slot, index) => {
+      if (slot.url) {
+        params.set(`v${index}`, slot.url);
+      }
+    });
+    
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowCopied(true);
+      setTimeout(() => setShowCopied(false), 2000);
+    } catch (err) {
+      // Fallback: show the URL in a prompt
+      prompt('Copy this link to share:', shareUrl);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="overflow-x-auto overflow-y-hidden">
       <div className="flex items-center gap-4 min-w-max">
@@ -49,10 +77,52 @@ export default function VideoInput({
         <button
           type="button"
           onClick={onToggleTopBar}
-          className="w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white flex-shrink-0"
+          className="group w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 hover:bg-zinc-700 flex-shrink-0 flex items-center justify-center"
           title="Hide controls (fullscreen)"
         >
-          ⬆️
+          <svg
+            viewBox="0 0 24 24"
+            className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {/* Ghost body */}
+            <path d="M12 2C8.5 2 6 4.5 6 8v8c0 1.5-1 2-1 2s-1 .5-1 2h16c0-1.5-1-2-1-2s-1-.5-1-2V8c0-3.5-2.5-6-6-6z" />
+            {/* Ghost bottom wavy edge */}
+            <path d="M6 18c0 0 1 2 2 2s2-2 2-2 1 2 2 2 2-2 2-2 1 2 2 2 2-2 2-2" />
+            {/* Eyes */}
+            <circle cx="9" cy="10" r="1" fill="currentColor" />
+            <circle cx="15" cy="10" r="1" fill="currentColor" />
+          </svg>
+        </button>
+
+        {/* Layout Toggle Button */}
+        <button
+          type="button"
+          onClick={onToggleLayout}
+          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${
+            layoutMode === 'split'
+              ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+              : layoutMode === 'expanded'
+                ? 'bg-purple-600 text-white ring-2 ring-purple-400'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+          }`}
+          title={`Layout: ${layoutMode} (click to cycle)`}
+        >
+          {layoutMode === 'split' ? '📐' : layoutMode === 'expanded' ? '🔍' : '⊞'}
+        </button>
+
+        {/* Reset Layout Button */}
+        <button
+          type="button"
+          onClick={onResetLayout}
+          className="w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white flex-shrink-0"
+          title="Reset layout dimensions"
+        >
+          ↺
         </button>
 
         {/* Quadrant Selector */}
@@ -64,7 +134,7 @@ export default function VideoInput({
               onClick={() => setSelectedQuadrant(index)}
               className={`w-10 h-10 rounded-lg font-semibold transition-all ${
                 selectedQuadrant === index
-                  ? 'bg-green-600 text-white ring-2 ring-green-400'
+                  ? 'bg-zinc-700 text-white ring-2 ring-zinc-600'
                   : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
               }`}
               title={`Quadrant ${index + 1}`}
@@ -101,6 +171,28 @@ export default function VideoInput({
             Clear
           </button>
         )}
+
+        {/* Share Button - iOS style share icon at the right end */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="group relative w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 hover:bg-zinc-700 flex-shrink-0 ml-auto flex items-center justify-center"
+          title="Share this setup"
+        >
+          {showCopied ? (
+            <span className="text-white text-xl">✓</span>
+          ) : (
+            <svg
+              viewBox="0 0 50 50"
+              className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors"
+              fill="currentColor"
+            >
+              <path d="M30.3 13.7L25 8.4l-5.3 5.3-1.4-1.4L25 5.6l6.7 6.7z" />
+              <path d="M24 7h2v21h-2z" />
+              <path d="M35 40H15c-1.7 0-3-1.3-3-3V19c0-1.7 1.3-3 3-3h7v2h-7c-.6 0-1 .4-1 1v18c0 .6.4 1 1 1h20c.6 0 1-.4 1-1V19c0-.6-.4-1-1-1h-7v-2h7c1.7 0 3 1.3 3 3v18c0 1.7-1.3 3-3 3z" />
+            </svg>
+          )}
+        </button>
       </div>
     </form>
   );
