@@ -22,6 +22,8 @@ export default function VideoGrid() {
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
   const [showControlsButton, setShowControlsButton] = useState<boolean>(true);
   const [layoutMode, setLayoutMode] = useState<'grid' | 'expanded' | 'split'>('grid');
+  const [singleVideoMode, setSingleVideoMode] = useState<boolean>(false);
+  const [numSlots, setNumSlots] = useState<number>(4);
   const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Adjustable border positions (percentages)
@@ -54,6 +56,24 @@ export default function VideoGrid() {
 
   // Load from localStorage and URL params on mount
   useEffect(() => {
+    // Load number of slots and single video mode
+    const savedNumSlots = localStorage.getItem('numSlots');
+    if (savedNumSlots) {
+      try {
+        const parsed = parseInt(savedNumSlots, 10);
+        if (parsed >= 1 && parsed <= 8) {
+          setNumSlots(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to load saved numSlots:', e);
+      }
+    }
+
+    const savedSingleVideoMode = localStorage.getItem('singleVideoMode');
+    if (savedSingleVideoMode === 'true') {
+      setSingleVideoMode(true);
+    }
+
     // Check URL parameters first (for shared links)
     const urlParams = new URLSearchParams(window.location.search);
     const urlVideos: VideoSlot[] = [
@@ -107,6 +127,35 @@ export default function VideoGrid() {
   useEffect(() => {
     localStorage.setItem('videoSlots', JSON.stringify(videoSlots));
   }, [videoSlots]);
+
+  // Save number of slots and single video mode
+  useEffect(() => {
+    localStorage.setItem('numSlots', numSlots.toString());
+  }, [numSlots]);
+
+  useEffect(() => {
+    localStorage.setItem('singleVideoMode', singleVideoMode.toString());
+  }, [singleVideoMode]);
+
+  // Sync videoSlots array length with numSlots
+  useEffect(() => {
+    setVideoSlots((slots) => {
+      const newSlots = [...slots];
+      // Add slots if needed
+      while (newSlots.length < numSlots) {
+        newSlots.push({ url: '', isExpanded: false });
+      }
+      // Remove slots if needed (but keep URLs)
+      if (newSlots.length > numSlots) {
+        return newSlots.slice(0, numSlots);
+      }
+      return newSlots;
+    });
+    // Ensure focusedIndex is valid
+    if (focusedIndex >= numSlots) {
+      setFocusedIndex(Math.max(0, numSlots - 1));
+    }
+  }, [numSlots]);
 
   // Save split positions to localStorage
   useEffect(() => {
