@@ -157,6 +157,31 @@ export default function VideoGrid() {
     }
   }, [numSlots]);
 
+  const handleAddSlot = () => {
+    if (numSlots < 8) {
+      setNumSlots(numSlots + 1);
+    }
+  };
+
+  const handleRemoveSlot = () => {
+    if (numSlots > 1) {
+      const newNumSlots = numSlots - 1;
+      setNumSlots(newNumSlots);
+      // Clear the last slot's URL if it exists
+      setVideoSlots((slots) => {
+        const newSlots = [...slots];
+        if (newSlots.length > newNumSlots && newSlots[newNumSlots]?.url) {
+          newSlots[newNumSlots] = { ...newSlots[newNumSlots], url: '' };
+        }
+        return newSlots.slice(0, newNumSlots);
+      });
+      // Adjust focusedIndex if needed
+      if (focusedIndex >= newNumSlots) {
+        setFocusedIndex(Math.max(0, newNumSlots - 1));
+      }
+    }
+  };
+
   // Save split positions to localStorage
   useEffect(() => {
     localStorage.setItem('splitPositions', JSON.stringify({
