@@ -444,8 +444,8 @@ export default function VideoGrid() {
                   bottom: 0
                 };
               }
-            } else if (anyExpanded && layoutMode !== 'grid') {
-              // Expanded mode
+            } else if (anyExpanded) {
+              // Expanded mode (works in both grid and expanded layout modes)
               if (index === expandedIndex) {
                 // Left expanded video
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
