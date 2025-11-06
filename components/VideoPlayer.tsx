@@ -270,8 +270,7 @@ export default function VideoPlayer({
         <iframe
           src={embedUrl}
           className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           style={{ border: 'none', overflow: 'hidden' }}
           title={`Video player ${quadrantIndex + 1}`}
         />
@@ -338,9 +337,8 @@ export default function VideoPlayer({
                 ref={iframeRef}
                 src={useProxy ? getProxyUrl(url) : url}
                 className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-                {...(!useProxy && { sandbox: "allow-same-origin allow-scripts allow-popups allow-forms allow-presentation" })}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-presentation"
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
@@ -395,9 +393,8 @@ export default function VideoPlayer({
                 ref={iframeRef}
                 src={useProxy ? getProxyUrl(url) : url}
                 className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowFullScreen
-                {...(!useProxy && { sandbox: "allow-same-origin allow-scripts allow-popups allow-forms allow-presentation" })}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-presentation"
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
