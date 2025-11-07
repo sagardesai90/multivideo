@@ -201,234 +201,6 @@ export async function GET(request: NextRequest) {
           }, true);
         })();
         
-        // ===== OVERLAY BLOCKING CODE =====
-        // Aggressive overlay detection and removal for StreamEast and similar sites
-        (function() {
-          // Function to check if an element is an overlay/ad
-          function isOverlay(element) {
-            if (!element || !element.tagName) return false;
-            
-            // Check class names and IDs for common overlay/ad patterns
-            const className = (element.className || '').toLowerCase();
-            const id = (element.id || '').toLowerCase();
-            const textContent = (element.textContent || '').toLowerCase();
-            
-            // StreamEast specific patterns
-            if (className.includes('chatmate') || id.includes('chatmate') || textContent.includes('chatmate')) return true;
-            if (className.includes('install') && (className.includes('app') || className.includes('banner'))) return true;
-            if (id.includes('install') && (id.includes('app') || id.includes('banner'))) return true;
-            
-            // Text-based detection for common overlay content (check first 500 chars for performance)
-            const shortText = textContent.substring(0, 500);
-            if (shortText.includes('install chatmatetv app') || 
-                shortText.includes('video chat with girls') ||
-                shortText.includes('tap to start match') ||
-                shortText.includes('skip ad') ||
-                shortText.includes('go to website') ||
-                shortText.includes('for easy access and notifications')) return true;
-            
-            // Ad overlay patterns
-            if (className.includes('ad-overlay') || id.includes('ad-overlay')) return true;
-            if (className.includes('ad-container') || id.includes('ad-container')) return true;
-            if (className.includes('skip-ad') || id.includes('skip-ad')) return true;
-            
-            // Check for button elements with overlay text (do this before expensive style checks)
-            if (element.tagName === 'BUTTON' || element.tagName === 'A') {
-              if (shortText.includes('skip') || shortText.includes('install') || shortText.includes('sign up') || shortText.includes('log in')) {
-                // Will be checked later with style.position
-                // Continue to style checks below
-              }
-            }
-            
-            // Generic overlay patterns
-            if (className.includes('overlay') || id.includes('overlay')) return true;
-            if (className.includes('popup') || id.includes('popup')) return true;
-            if (className.includes('modal') || id.includes('modal')) return true;
-            if (className.includes('lightbox') || id.includes('lightbox')) return true;
-            
-            // Banner patterns
-            if (className.includes('banner') || id.includes('banner')) return true;
-            if (className.includes('promo') || id.includes('promo')) return true;
-            if (className.includes('install') || id.includes('install')) return true;
-            
-            // Check for high z-index (common for overlays)
-            let style, zIndex, position, width, height, rect;
-            try {
-              style = window.getComputedStyle(element);
-              zIndex = parseInt(style.zIndex) || 0;
-              position = style.position;
-              width = style.width;
-              height = style.height;
-              rect = element.getBoundingClientRect();
-            } catch (e) {
-              // Element might be detached, skip
-              return false;
-            }
-            
-            // Check for button/link elements with overlay text positioned as overlays
-            if ((element.tagName === 'BUTTON' || element.tagName === 'A') && 
-                (shortText.includes('skip') || shortText.includes('install') || 
-                 shortText.includes('sign up') || shortText.includes('log in'))) {
-              if (position === 'fixed' || position === 'absolute') {
-                return true;
-              }
-            }
-            
-            // Check for high z-index overlays
-            if (zIndex >= 100 && (position === 'fixed' || position === 'absolute')) {
-              // But exclude video elements
-              if (element.tagName !== 'VIDEO' && element.tagName !== 'IFRAME' && 
-                  !className.includes('video') && !id.includes('video') &&
-                  !className.includes('player') && !id.includes('player')) {
-                // Check if element covers significant portion of screen
-                const coversLargeArea = rect.width > window.innerWidth * 0.5 && 
-                                       rect.height > window.innerHeight * 0.3;
-                
-                // If it's a high z-index element covering large area, it's likely an overlay
-                if (coversLargeArea && zIndex >= 1000) {
-                  return true;
-                }
-              }
-            }
-            
-            // Check for full-screen blocking elements
-            if (position === 'fixed') {
-              const isFullWidth = width === '100%' || width === '100vw' || rect.width >= window.innerWidth * 0.9;
-              const isFullHeight = height === '100%' || height === '100vh' || rect.height >= window.innerHeight * 0.9;
-              
-              if ((isFullWidth || isFullHeight) && zIndex > 100) {
-                // Exclude video containers
-                if (!className.includes('video') && !id.includes('video') &&
-                    !className.includes('player') && !id.includes('player') &&
-                    element.tagName !== 'VIDEO' && element.tagName !== 'IFRAME') {
-                  return true;
-                }
-              }
-            }
-            
-            return false;
-          }
-          
-          // Function to remove overlay elements
-          function removeOverlays() {
-            const allElements = document.querySelectorAll('*');
-            let removedCount = 0;
-            
-            allElements.forEach(function(element) {
-              // Skip if already removed or is video/iframe
-              if (!element.parentNode) return;
-              if (element.tagName === 'VIDEO' || element.tagName === 'IFRAME') return;
-              
-              if (isOverlay(element)) {
-                console.log('[OVERLAY BLOCKED] Removing overlay:', element.className || element.id || element.tagName);
-                element.style.display = 'none';
-                element.style.visibility = 'hidden';
-                element.style.opacity = '0';
-                element.style.pointerEvents = 'none';
-                // Try to remove from DOM
-                try {
-                  element.remove();
-                } catch (e) {
-                  // If remove fails, ensure it's hidden
-                  element.style.setProperty('display', 'none', 'important');
-                }
-                removedCount++;
-              }
-            });
-            
-            if (removedCount > 0) {
-              console.log('[OVERLAY BLOCKED] Removed', removedCount, 'overlay elements');
-            }
-          }
-          
-          // Function to block overlay creation via DOM manipulation
-          function setupOverlayPrevention() {
-            // Monitor for dynamically added overlays
-            const overlayObserver = new MutationObserver(function(mutations) {
-              mutations.forEach(function(mutation) {
-                mutation.addedNodes.forEach(function(node) {
-                  if (node.nodeType === 1) { // Element node
-                    if (isOverlay(node)) {
-                      console.log('[OVERLAY BLOCKED] Preventing overlay from being added:', node.className || node.id);
-                      try {
-                        node.remove();
-                      } catch (e) {
-                        if (node.parentNode) {
-                          node.parentNode.removeChild(node);
-                        }
-                      }
-                    }
-                    
-                    // Check child elements
-                    if (node.querySelectorAll) {
-                      const overlays = node.querySelectorAll('*');
-                      overlays.forEach(function(element) {
-                        if (isOverlay(element)) {
-                          console.log('[OVERLAY BLOCKED] Removing child overlay:', element.className || element.id);
-                          try {
-                            element.remove();
-                          } catch (e) {
-                            element.style.display = 'none';
-                            element.style.visibility = 'hidden';
-                            element.style.opacity = '0';
-                            element.style.pointerEvents = 'none';
-                          }
-                        }
-                      });
-                    }
-                  }
-                });
-              });
-            });
-            
-            // Start observing when DOM is ready
-            if (document.body) {
-              overlayObserver.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['style', 'class', 'id']
-              });
-              
-              // Initial cleanup
-              removeOverlays();
-            } else {
-              document.addEventListener('DOMContentLoaded', function() {
-                overlayObserver.observe(document.body, {
-                  childList: true,
-                  subtree: true,
-                  attributes: true,
-                  attributeFilter: ['style', 'class', 'id']
-                });
-                removeOverlays();
-              });
-            }
-            
-            // Periodic cleanup (catch overlays that appear after delays like 10 minutes)
-            setInterval(removeOverlays, 1000); // Check every second
-            
-            // Also run cleanup on page load
-            window.addEventListener('load', function() {
-              setTimeout(removeOverlays, 100);
-              setTimeout(removeOverlays, 1000);
-              setTimeout(removeOverlays, 5000);
-            });
-            
-            // Cleanup after longer delays (for delayed overlays)
-            setTimeout(removeOverlays, 60000);  // 1 minute
-            setTimeout(removeOverlays, 300000); // 5 minutes
-            setTimeout(removeOverlays, 600000); // 10 minutes
-            setTimeout(removeOverlays, 900000); // 15 minutes
-          }
-          
-          // Start overlay prevention
-          if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupOverlayPrevention);
-          } else {
-            setupOverlayPrevention();
-          }
-        })();
-        
         // ===== VIDEO MUTING CODE =====
         // Global mute state
         let globalMuted = false;
@@ -526,32 +298,11 @@ export async function GET(request: NextRequest) {
         iframe[src*="advertising"], div[id*="google_ads"],
         /* Common popup/overlay z-index patterns */
         div[style*="z-index: 999"], div[style*="z-index: 9999"],
-        div[style*="z-index:999"], div[style*="z-index:9999"],
-        /* StreamEast specific overlays - chatmate.tv */
-        [class*="chatmate"], [id*="chatmate"],
-        [class*="chatmate.tv"], [id*="chatmate.tv"],
-        /* Install app banners */
-        [class*="install"][class*="app"], [id*="install"][id*="app"],
-        [class*="install-app"], [id*="install-app"],
-        [class*="app-banner"], [id*="app-banner"],
-        [class*="install-banner"], [id*="install-banner"],
-        /* Ad overlay controls */
-        [class*="skip-ad"], [id*="skip-ad"],
-        [class*="ad-control"], [id*="ad-control"],
-        [class*="ad-control-bar"], [id*="ad-control-bar"],
-        /* Video chat overlays */
-        [class*="video-chat"], [id*="video-chat"],
-        [class*="chat-with"], [id*="chat-with"],
-        /* Full-screen overlays that block video */
-        div[style*="position: fixed"][style*="z-index"][style*="100"],
-        div[style*="position: absolute"][style*="z-index"][style*="100"] {
+        div[style*="z-index:999"], div[style*="z-index:9999"] {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
           pointer-events: none !important;
-          height: 0 !important;
-          width: 0 !important;
-          overflow: hidden !important;
         }
         
         /* Make body and html fill the space */
@@ -602,7 +353,7 @@ export async function GET(request: NextRequest) {
 
     // Create a new response with modified headers
     const proxyResponse = new NextResponse(html);
-    
+
     // Copy content type
     const contentType = response.headers.get('content-type');
     if (contentType) {
@@ -613,12 +364,12 @@ export async function GET(request: NextRequest) {
     proxyResponse.headers.delete('X-Frame-Options');
     proxyResponse.headers.delete('Content-Security-Policy');
     proxyResponse.headers.delete('X-Content-Security-Policy');
-    
+
     // Add permissive CORS headers
     proxyResponse.headers.set('Access-Control-Allow-Origin', '*');
     proxyResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     proxyResponse.headers.set('Access-Control-Allow-Headers', '*');
-    
+
     // Add CSP to block popups at browser level while allowing video playback
     proxyResponse.headers.set(
       'Content-Security-Policy',
