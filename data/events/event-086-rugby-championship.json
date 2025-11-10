@@ -1,0 +1,21 @@
+{
+  "id": "event-086-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2025-12-28T15:00:00Z",
+    "end": "2025-12-28T18:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-056",
+    "provider-015",
+    "provider-048",
+    "provider-010"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "Enhanced data overlays enabled"
+  ]
+}

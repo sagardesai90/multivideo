@@ -1,0 +1,20 @@
+{
+  "id": "event-017-mls",
+  "sport": "mls",
+  "title": "Mls Derby Day",
+  "window": {
+    "start": "2025-12-21T12:00:00Z",
+    "end": "2025-12-21T14:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-003",
+    "provider-019"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Dolby Atmos mix available",
+    "VR companion experience"
+  ]
+}

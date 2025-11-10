@@ -1,0 +1,22 @@
+{
+  "id": "event-036-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League LAN Finale",
+  "window": {
+    "start": "2025-12-20T12:00:00Z",
+    "end": "2025-12-20T15:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-050",
+    "provider-027",
+    "provider-053"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "VR companion experience"
+  ]
+}

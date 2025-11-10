@@ -1,0 +1,17 @@
+{
+  "id": "playlist-013-mls",
+  "sport": "mls",
+  "title": "Mls Weekly Mix #14",
+  "curator": "regional-scouts",
+  "targetWeeks": [
+    "2025-W15",
+    "2025-W23",
+    "2025-W32"
+  ],
+  "events": [
+    "event-064-mls",
+    "event-017-mls",
+    "event-031-mls",
+    "event-085-mls"
+  ]
+}

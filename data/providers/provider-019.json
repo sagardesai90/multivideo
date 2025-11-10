@@ -1,0 +1,44 @@
+{
+  "id": "provider-019",
+  "name": "AllStar Balkan Play Signals",
+  "sportsFocus": [
+    "golf-tour",
+    "nfl"
+  ],
+  "coverageCountries": [
+    "br",
+    "ca",
+    "nz",
+    "za"
+  ],
+  "supportedLanguages": [
+    "en",
+    "es",
+    "pt"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-019/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-019/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-019-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-019",
+    "contact": "support@provider-019.example.com",
+    "onCall": "regional-escalation"
+  }
+}

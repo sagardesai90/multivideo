@@ -1,0 +1,23 @@
+{
+  "id": "event-063-mma",
+  "sport": "mma",
+  "title": "Mma Contender Series",
+  "window": {
+    "start": "2025-12-23T12:00:00Z",
+    "end": "2025-12-23T15:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-032",
+    "provider-057",
+    "provider-009",
+    "provider-055"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Alternate commentary lane",
+    "Dolby Atmos mix available",
+    "4K SDR primary feed"
+  ]
+}

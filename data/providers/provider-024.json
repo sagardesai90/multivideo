@@ -1,0 +1,47 @@
+{
+  "id": "provider-024",
+  "name": "Auric Transatlantic Interactive",
+  "sportsFocus": [
+    "esports-league",
+    "golf-tour",
+    "nba",
+    "rugby-championship",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "es",
+    "fr",
+    "kr",
+    "nz"
+  ],
+  "supportedLanguages": [
+    "de",
+    "it",
+    "ko"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-024/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-024/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-024-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-024",
+    "contact": "support@provider-024.example.com",
+    "onCall": "hybrid"
+  }
+}

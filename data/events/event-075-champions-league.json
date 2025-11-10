@@ -1,0 +1,21 @@
+{
+  "id": "event-075-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Final Rehearsal",
+  "window": {
+    "start": "2025-12-09T15:00:00Z",
+    "end": "2025-12-09T17:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-044",
+    "provider-047",
+    "provider-035"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Dolby Atmos mix available"
+  ]
+}

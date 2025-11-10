@@ -1,0 +1,16 @@
+{
+  "id": "playlist-004-premier-league",
+  "sport": "premier-league",
+  "title": "Premier League Weekly Mix #05",
+  "curator": "regional-scouts",
+  "targetWeeks": [
+    "2025-W06",
+    "2025-W26",
+    "2025-W51"
+  ],
+  "events": [
+    "event-004-premier-league",
+    "event-041-premier-league",
+    "event-060-premier-league"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": "event-081-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Southern Hemisphere Test",
+  "window": {
+    "start": "2025-12-19T15:00:00Z",
+    "end": "2025-12-19T19:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-036",
+    "provider-027"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Enhanced data overlays enabled",
+    "Dolby Atmos mix available"
+  ]
+}

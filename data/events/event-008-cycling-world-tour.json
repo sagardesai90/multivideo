@@ -1,0 +1,23 @@
+{
+  "id": "event-008-cycling-world-tour",
+  "sport": "cycling-world-tour",
+  "title": "Cycling World Tour Sprint Finish",
+  "window": {
+    "start": "2025-11-30T22:00:00Z",
+    "end": "2025-12-01T01:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-010",
+    "provider-059",
+    "provider-023",
+    "provider-020"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "VR companion experience",
+    "Player-specific iso cams",
+    "Dolby Atmos mix available"
+  ]
+}

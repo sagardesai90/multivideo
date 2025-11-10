@@ -1,0 +1,16 @@
+{
+  "id": "playlist-003-nba",
+  "sport": "nba",
+  "title": "Nba Weekly Mix #04",
+  "curator": "automation-playbook",
+  "targetWeeks": [
+    "2025-W13",
+    "2025-W40"
+  ],
+  "events": [
+    "event-021-nba",
+    "event-051-nba",
+    "event-002-nba",
+    "event-040-nba"
+  ]
+}

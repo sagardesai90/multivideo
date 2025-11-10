@@ -1,0 +1,20 @@
+{
+  "id": "event-033-tennis-tour",
+  "sport": "tennis-tour",
+  "title": "Tennis Tour Grand Slam Warmup",
+  "window": {
+    "start": "2025-11-26T15:00:00Z",
+    "end": "2025-11-26T17:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-058",
+    "provider-046"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "VR companion experience",
+    "Alternate commentary lane"
+  ]
+}

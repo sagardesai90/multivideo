@@ -1,0 +1,46 @@
+{
+  "id": "provider-037",
+  "name": "Global Central Play Signals",
+  "sportsFocus": [
+    "esports-league",
+    "la-liga",
+    "rugby-championship",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "br",
+    "ca",
+    "es",
+    "jp"
+  ],
+  "supportedLanguages": [
+    "es",
+    "hi",
+    "ko"
+  ],
+  "primaryCdn": "limelight",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-037/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-037/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-037-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-037",
+    "contact": "support@provider-037.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

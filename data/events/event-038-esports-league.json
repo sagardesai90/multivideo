@@ -1,0 +1,21 @@
+{
+  "id": "event-038-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League LAN Finale",
+  "window": {
+    "start": "2026-01-16T12:00:00Z",
+    "end": "2026-01-16T14:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-021",
+    "provider-060"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "Enhanced data overlays enabled",
+    "Alternate commentary lane"
+  ]
+}

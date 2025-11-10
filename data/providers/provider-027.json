@@ -1,0 +1,59 @@
+{
+  "id": "provider-027",
+  "name": "Global Pacific Interactive",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "nba",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "ca",
+    "es"
+  ],
+  "supportedLanguages": [
+    "de",
+    "ko"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-027/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-027/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-027-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-027/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-027/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-027-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-027",
+    "contact": "support@provider-027.example.com",
+    "onCall": "hybrid"
+  }
+}

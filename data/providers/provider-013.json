@@ -1,0 +1,41 @@
+{
+  "id": "provider-013",
+  "name": "Prime Cascadia Digital Hub",
+  "sportsFocus": [
+    "mls",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "au",
+    "us"
+  ],
+  "supportedLanguages": [
+    "hi",
+    "zh"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-013/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "us",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-013/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-013-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-013",
+    "contact": "support@provider-013.example.com",
+    "onCall": "hybrid"
+  }
+}

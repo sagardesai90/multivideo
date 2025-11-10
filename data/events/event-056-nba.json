@@ -1,0 +1,23 @@
+{
+  "id": "event-056-nba",
+  "sport": "nba",
+  "title": "Nba Marquee Matchup",
+  "window": {
+    "start": "2025-12-24T22:00:00Z",
+    "end": "2025-12-25T02:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-031",
+    "provider-013",
+    "provider-016",
+    "provider-018"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "Alternate commentary lane"
+  ]
+}

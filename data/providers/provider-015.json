@@ -1,0 +1,59 @@
+{
+  "id": "provider-015",
+  "name": "Ultra Coastal League Pass",
+  "sportsFocus": [
+    "cricket-world-series",
+    "la-liga"
+  ],
+  "coverageCountries": [
+    "br",
+    "de",
+    "es"
+  ],
+  "supportedLanguages": [
+    "de",
+    "es"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-015/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-015/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-015-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-015/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "de",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-015/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-015-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-015",
+    "contact": "support@provider-015.example.com",
+    "onCall": "hybrid"
+  }
+}

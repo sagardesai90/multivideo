@@ -1,0 +1,79 @@
+{
+  "id": "provider-059",
+  "name": "Continental Balkan Streaming Cooperative",
+  "sportsFocus": [
+    "rugby-championship",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "br",
+    "ca",
+    "de",
+    "fr",
+    "za"
+  ],
+  "supportedLanguages": [
+    "es",
+    "pt",
+    "zh"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-059/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-059/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-059-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-059/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "br",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-059/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-059-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-059/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-059/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-059-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-059",
+    "contact": "support@provider-059.example.com",
+    "onCall": "regional-escalation"
+  }
+}

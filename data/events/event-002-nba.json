@@ -1,0 +1,23 @@
+{
+  "id": "event-002-nba",
+  "sport": "nba",
+  "title": "Nba Playoff Preview",
+  "window": {
+    "start": "2026-01-09T20:00:00Z",
+    "end": "2026-01-10T00:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Grand Prix Circuit",
+  "availableProviders": [
+    "provider-060",
+    "provider-057",
+    "provider-037",
+    "provider-042"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Alternate commentary lane",
+    "VR companion experience",
+    "Alternate commentary lane"
+  ]
+}

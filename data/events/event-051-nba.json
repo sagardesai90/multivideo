@@ -1,0 +1,23 @@
+{
+  "id": "event-051-nba",
+  "sport": "nba",
+  "title": "Nba Marquee Matchup",
+  "window": {
+    "start": "2025-12-21T22:00:00Z",
+    "end": "2025-12-22T00:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-054",
+    "provider-020",
+    "provider-038",
+    "provider-022"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "VR companion experience"
+  ]
+}

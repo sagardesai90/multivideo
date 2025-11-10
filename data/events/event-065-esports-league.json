@@ -1,0 +1,22 @@
+{
+  "id": "event-065-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League Regional Semifinal",
+  "window": {
+    "start": "2026-01-15T20:00:00Z",
+    "end": "2026-01-15T23:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-007",
+    "provider-012",
+    "provider-009",
+    "provider-031"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "4K SDR primary feed",
+    "Alternate commentary lane"
+  ]
+}

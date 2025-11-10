@@ -1,0 +1,17 @@
+{
+  "id": "playlist-022-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series Weekly Mix #23",
+  "curator": "audience-growth",
+  "targetWeeks": [
+    "2025-W17",
+    "2025-W24"
+  ],
+  "events": [
+    "event-044-cricket-world-series",
+    "event-078-cricket-world-series",
+    "event-089-cricket-world-series",
+    "event-055-cricket-world-series",
+    "event-073-cricket-world-series"
+  ]
+}

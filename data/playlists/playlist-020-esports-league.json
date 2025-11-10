@@ -1,0 +1,17 @@
+{
+  "id": "playlist-020-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League Weekly Mix #21",
+  "curator": "audience-growth",
+  "targetWeeks": [
+    "2025-W09",
+    "2025-W18"
+  ],
+  "events": [
+    "event-070-esports-league",
+    "event-084-esports-league",
+    "event-046-esports-league",
+    "event-038-esports-league",
+    "event-087-esports-league"
+  ]
+}

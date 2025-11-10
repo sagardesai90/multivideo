@@ -1,0 +1,78 @@
+{
+  "id": "provider-018",
+  "name": "Aurora Pacific Multi-View",
+  "sportsFocus": [
+    "f1",
+    "golf-tour",
+    "mma",
+    "nba",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "ca",
+    "us",
+    "za"
+  ],
+  "supportedLanguages": [
+    "pt"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-018/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-018/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-018-webrtc"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-018/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-018/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-018-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-018/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-018/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-018-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-018",
+    "contact": "support@provider-018.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

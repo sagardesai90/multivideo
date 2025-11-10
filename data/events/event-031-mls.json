@@ -1,0 +1,20 @@
+{
+  "id": "event-031-mls",
+  "sport": "mls",
+  "title": "Mls Conference Battle",
+  "window": {
+    "start": "2026-01-23T12:00:00Z",
+    "end": "2026-01-23T14:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Liberty Field",
+  "availableProviders": [
+    "provider-021",
+    "provider-042",
+    "provider-018"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "4K SDR primary feed"
+  ]
+}

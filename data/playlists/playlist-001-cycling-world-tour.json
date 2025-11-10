@@ -1,0 +1,17 @@
+{
+  "id": "playlist-001-cycling-world-tour",
+  "sport": "cycling-world-tour",
+  "title": "Cycling World Tour Weekly Mix #02",
+  "curator": "editorial-team",
+  "targetWeeks": [
+    "2025-W35",
+    "2025-W36"
+  ],
+  "events": [
+    "event-001-cycling-world-tour",
+    "event-008-cycling-world-tour",
+    "event-016-cycling-world-tour",
+    "event-039-cycling-world-tour",
+    "event-045-cycling-world-tour"
+  ]
+}

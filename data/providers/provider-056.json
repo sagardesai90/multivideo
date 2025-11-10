@@ -1,0 +1,80 @@
+{
+  "id": "provider-056",
+  "name": "Edge Baltic Streaming Cooperative",
+  "sportsFocus": [
+    "cricket-world-series",
+    "cycling-world-tour",
+    "la-liga",
+    "mls"
+  ],
+  "coverageCountries": [
+    "au",
+    "ca",
+    "fr",
+    "kr"
+  ],
+  "supportedLanguages": [
+    "ar",
+    "hi",
+    "zh"
+  ],
+  "primaryCdn": "akamai",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-056/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "kr",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-056/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-056-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-056/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-056/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-056-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-056/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-056/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-056-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-056",
+    "contact": "support@provider-056.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

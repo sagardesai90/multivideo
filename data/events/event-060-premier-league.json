@@ -1,0 +1,21 @@
+{
+  "id": "event-060-premier-league",
+  "sport": "premier-league",
+  "title": "Premier League Matchweek Clash",
+  "window": {
+    "start": "2025-12-23T20:00:00Z",
+    "end": "2025-12-24T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-050",
+    "provider-009",
+    "provider-001",
+    "provider-036"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "VR companion experience"
+  ]
+}

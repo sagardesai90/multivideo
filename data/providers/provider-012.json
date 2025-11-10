@@ -1,0 +1,62 @@
+{
+  "id": "provider-012",
+  "name": "Voyager Atlantic Streaming Cooperative",
+  "sportsFocus": [
+    "champions-league",
+    "nba",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "ca",
+    "de",
+    "fr",
+    "sg",
+    "us"
+  ],
+  "supportedLanguages": [
+    "en",
+    "ja"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-012/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "de",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-012/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-012-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-012/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-012/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-012-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-012",
+    "contact": "support@provider-012.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

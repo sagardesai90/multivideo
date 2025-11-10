@@ -1,0 +1,62 @@
+{
+  "id": "provider-042",
+  "name": "Metro Panamerican Digital Hub",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "nfl",
+    "premier-league",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "au",
+    "nz",
+    "sg",
+    "za"
+  ],
+  "supportedLanguages": [
+    "fr",
+    "ko"
+  ],
+  "primaryCdn": "limelight",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-042/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-042/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-042-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-042/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "au",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-042/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-042-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-042",
+    "contact": "support@provider-042.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

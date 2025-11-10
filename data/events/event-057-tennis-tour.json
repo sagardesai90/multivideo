@@ -1,0 +1,23 @@
+{
+  "id": "event-057-tennis-tour",
+  "sport": "tennis-tour",
+  "title": "Tennis Tour Masters Quarterfinal",
+  "window": {
+    "start": "2025-12-21T20:00:00Z",
+    "end": "2025-12-21T23:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-018",
+    "provider-019",
+    "provider-008",
+    "provider-037"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Player-specific iso cams",
+    "Alternate commentary lane"
+  ]
+}

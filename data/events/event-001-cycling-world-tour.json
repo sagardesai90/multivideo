@@ -1,0 +1,19 @@
+{
+  "id": "event-001-cycling-world-tour",
+  "sport": "cycling-world-tour",
+  "title": "Cycling World Tour Sprint Finish",
+  "window": {
+    "start": "2025-12-11T15:00:00Z",
+    "end": "2025-12-11T17:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-012",
+    "provider-039"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "4K SDR primary feed"
+  ]
+}

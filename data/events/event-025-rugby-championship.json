@@ -1,0 +1,20 @@
+{
+  "id": "event-025-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2026-02-01T12:00:00Z",
+    "end": "2026-02-01T14:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-056",
+    "provider-042"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "4K SDR primary feed",
+    "Alternate commentary lane"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "event-011-nba",
+  "sport": "nba",
+  "title": "Nba Conference Spotlight",
+  "window": {
+    "start": "2025-11-23T18:00:00Z",
+    "end": "2025-11-23T22:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Liberty Field",
+  "availableProviders": [
+    "provider-043",
+    "provider-022"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Dolby Atmos mix available"
+  ]
+}

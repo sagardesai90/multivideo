@@ -1,0 +1,22 @@
+{
+  "id": "event-030-boxing",
+  "sport": "boxing",
+  "title": "Boxing Undercard Showcase",
+  "window": {
+    "start": "2025-11-27T12:00:00Z",
+    "end": "2025-11-27T14:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-025",
+    "provider-037",
+    "provider-003"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "VR companion experience",
+    "Player-specific iso cams",
+    "Alternate commentary lane"
+  ]
+}

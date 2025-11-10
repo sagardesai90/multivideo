@@ -1,0 +1,60 @@
+{
+  "id": "provider-023",
+  "name": "Prime Nordic Interactive",
+  "sportsFocus": [
+    "boxing",
+    "champions-league",
+    "f1",
+    "nba",
+    "premier-league"
+  ],
+  "coverageCountries": [
+    "ca",
+    "kr"
+  ],
+  "supportedLanguages": [
+    "fr"
+  ],
+  "primaryCdn": "limelight",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-023/hls/master.m3u8",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "kr",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-023/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-023-hls"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-023/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-023/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-023-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-023",
+    "contact": "support@provider-023.example.com",
+    "onCall": "hybrid"
+  }
+}

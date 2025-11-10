@@ -1,0 +1,76 @@
+{
+  "id": "provider-049",
+  "name": "Aurora Nordic Arena",
+  "sportsFocus": [
+    "cricket-world-series",
+    "mma"
+  ],
+  "coverageCountries": [
+    "au",
+    "fr",
+    "nz",
+    "za"
+  ],
+  "supportedLanguages": [
+    "hi"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-049/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-049/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-049-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-049/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "au",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-049/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-049-webrtc"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-049/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-049/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-049-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-049",
+    "contact": "support@provider-049.example.com",
+    "onCall": "hybrid"
+  }
+}

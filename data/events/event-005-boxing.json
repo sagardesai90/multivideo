@@ -1,0 +1,20 @@
+{
+  "id": "event-005-boxing",
+  "sport": "boxing",
+  "title": "Boxing Main Event Bout",
+  "window": {
+    "start": "2026-01-27T18:00:00Z",
+    "end": "2026-01-27T21:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Liberty Field",
+  "availableProviders": [
+    "provider-029",
+    "provider-007"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled"
+  ]
+}

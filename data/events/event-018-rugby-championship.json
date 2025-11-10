@@ -1,0 +1,21 @@
+{
+  "id": "event-018-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2025-11-11T22:00:00Z",
+    "end": "2025-11-12T00:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-054",
+    "provider-010"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Enhanced data overlays enabled",
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams"
+  ]
+}

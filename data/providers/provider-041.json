@@ -1,0 +1,45 @@
+{
+  "id": "provider-041",
+  "name": "Velocity Nordic Streaming Cooperative",
+  "sportsFocus": [
+    "boxing",
+    "la-liga",
+    "nba",
+    "nfl",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "ca",
+    "kr",
+    "mx",
+    "sg"
+  ],
+  "supportedLanguages": [
+    "ko"
+  ],
+  "primaryCdn": "limelight",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-041/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-041/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-041-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-041",
+    "contact": "support@provider-041.example.com",
+    "onCall": "regional-escalation"
+  }
+}

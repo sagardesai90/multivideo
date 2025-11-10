@@ -1,0 +1,22 @@
+{
+  "id": "event-003-nba",
+  "sport": "nba",
+  "title": "Nba Marquee Matchup",
+  "window": {
+    "start": "2026-01-10T12:00:00Z",
+    "end": "2026-01-10T15:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-004",
+    "provider-023",
+    "provider-033",
+    "provider-005"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Player-specific iso cams",
+    "4K SDR primary feed"
+  ]
+}

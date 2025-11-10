@@ -1,0 +1,75 @@
+{
+  "id": "provider-051",
+  "name": "Vantage Panamerican Multi-View",
+  "sportsFocus": [
+    "champions-league",
+    "nfl"
+  ],
+  "coverageCountries": [
+    "mx",
+    "sg",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "hi"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-051/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-051/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-051-webrtc"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-051/hls/master.m3u8",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-051/hls",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-051-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-051/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-051/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-051-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-051",
+    "contact": "support@provider-051.example.com",
+    "onCall": "regional-escalation"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "playlist-007-boxing",
+  "sport": "boxing",
+  "title": "Boxing Weekly Mix #08",
+  "curator": "regional-scouts",
+  "targetWeeks": [
+    "2025-W03",
+    "2025-W07",
+    "2025-W15",
+    "2025-W34"
+  ],
+  "events": [
+    "event-034-boxing",
+    "event-030-boxing"
+  ]
+}

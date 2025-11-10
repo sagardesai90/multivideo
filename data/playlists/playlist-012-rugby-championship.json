@@ -1,0 +1,17 @@
+{
+  "id": "playlist-012-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Weekly Mix #13",
+  "curator": "editorial-team",
+  "targetWeeks": [
+    "2025-W39",
+    "2025-W40",
+    "2025-W50"
+  ],
+  "events": [
+    "event-081-rugby-championship",
+    "event-043-rugby-championship",
+    "event-053-rugby-championship",
+    "event-072-rugby-championship"
+  ]
+}

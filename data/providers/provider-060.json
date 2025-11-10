@@ -1,0 +1,59 @@
+{
+  "id": "provider-060",
+  "name": "Voyager Cascadia Multi-View",
+  "sportsFocus": [
+    "champions-league",
+    "cycling-world-tour"
+  ],
+  "coverageCountries": [
+    "ca",
+    "fr"
+  ],
+  "supportedLanguages": [
+    "es",
+    "ja",
+    "zh"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-060/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-060/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-060-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-060/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-060/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-060-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-060",
+    "contact": "support@provider-060.example.com",
+    "onCall": "hybrid"
+  }
+}

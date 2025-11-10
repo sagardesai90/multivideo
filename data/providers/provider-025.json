@@ -1,0 +1,43 @@
+{
+  "id": "provider-025",
+  "name": "Velocity Central Broadcast Exchange",
+  "sportsFocus": [
+    "champions-league",
+    "nba",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "ca",
+    "sg",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "ko",
+    "zh"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-025/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-025/hls",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-025-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-025",
+    "contact": "support@provider-025.example.com",
+    "onCall": "hybrid"
+  }
+}

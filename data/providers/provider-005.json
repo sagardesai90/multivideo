@@ -1,0 +1,46 @@
+{
+  "id": "provider-005",
+  "name": "Edge Baltic Sports Network",
+  "sportsFocus": [
+    "champions-league",
+    "f1",
+    "la-liga",
+    "nfl"
+  ],
+  "coverageCountries": [
+    "ca",
+    "fr",
+    "mx",
+    "nz"
+  ],
+  "supportedLanguages": [
+    "fr",
+    "it",
+    "ko"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-005/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-005/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-005-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-005",
+    "contact": "support@provider-005.example.com",
+    "onCall": "regional-escalation"
+  }
+}

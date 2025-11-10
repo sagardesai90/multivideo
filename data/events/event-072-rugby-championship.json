@@ -1,0 +1,22 @@
+{
+  "id": "event-072-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Rivalry Cup",
+  "window": {
+    "start": "2025-11-13T18:00:00Z",
+    "end": "2025-11-13T21:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-014",
+    "provider-038",
+    "provider-005",
+    "provider-003"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "VR companion experience",
+    "4K SDR primary feed"
+  ]
+}

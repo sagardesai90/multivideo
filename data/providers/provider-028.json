@@ -1,0 +1,74 @@
+{
+  "id": "provider-028",
+  "name": "Velocity Sahara Sports Network",
+  "sportsFocus": [
+    "esports-league",
+    "f1"
+  ],
+  "coverageCountries": [
+    "au",
+    "de"
+  ],
+  "supportedLanguages": [
+    "fr"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-028/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "de",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-028/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-028-hls"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-028/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "au",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-028/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-028-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-028/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "au",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-028/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-028-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-028",
+    "contact": "support@provider-028.example.com",
+    "onCall": "hybrid"
+  }
+}

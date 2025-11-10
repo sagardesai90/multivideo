@@ -1,0 +1,18 @@
+{
+  "id": "playlist-005-boxing",
+  "sport": "boxing",
+  "title": "Boxing Weekly Mix #06",
+  "curator": "audience-growth",
+  "targetWeeks": [
+    "2025-W04",
+    "2025-W31",
+    "2025-W36"
+  ],
+  "events": [
+    "event-079-boxing",
+    "event-006-boxing",
+    "event-067-boxing",
+    "event-029-boxing",
+    "event-005-boxing"
+  ]
+}

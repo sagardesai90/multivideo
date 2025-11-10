@@ -1,0 +1,20 @@
+{
+  "id": "event-082-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Group Stage Spotlight",
+  "window": {
+    "start": "2025-12-07T18:00:00Z",
+    "end": "2025-12-07T21:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-006",
+    "provider-035",
+    "provider-047"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "Alternate commentary lane"
+  ]
+}

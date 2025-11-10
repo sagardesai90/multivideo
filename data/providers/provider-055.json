@@ -1,0 +1,74 @@
+{
+  "id": "provider-055",
+  "name": "Metro Central Arena",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "la-liga"
+  ],
+  "coverageCountries": [
+    "ca",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "pt"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-055/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-055/hls",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-055-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-055/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-055/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-055-dash"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-055/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-055/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-055-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-055",
+    "contact": "support@provider-055.example.com",
+    "onCall": "regional-escalation"
+  }
+}

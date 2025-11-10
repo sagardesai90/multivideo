@@ -1,0 +1,43 @@
+{
+  "id": "provider-052",
+  "name": "Voyager Central Broadcast Exchange",
+  "sportsFocus": [
+    "boxing",
+    "golf-tour",
+    "la-liga",
+    "nba"
+  ],
+  "coverageCountries": [
+    "de",
+    "us"
+  ],
+  "supportedLanguages": [
+    "ar",
+    "de"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-052/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "de",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-052/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-052-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-052",
+    "contact": "support@provider-052.example.com",
+    "onCall": "hybrid"
+  }
+}

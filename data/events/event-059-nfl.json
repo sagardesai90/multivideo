@@ -1,0 +1,21 @@
+{
+  "id": "event-059-nfl",
+  "sport": "nfl",
+  "title": "Nfl Wildcard Chase",
+  "window": {
+    "start": "2025-11-28T18:00:00Z",
+    "end": "2025-11-28T20:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Grand Prix Circuit",
+  "availableProviders": [
+    "provider-016",
+    "provider-004"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Dolby Atmos mix available",
+    "VR companion experience",
+    "Dolby Atmos mix available"
+  ]
+}

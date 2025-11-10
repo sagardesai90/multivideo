@@ -1,0 +1,43 @@
+{
+  "id": "provider-050",
+  "name": "Vantage Alpine League Pass",
+  "sportsFocus": [
+    "boxing",
+    "champions-league",
+    "esports-league"
+  ],
+  "coverageCountries": [
+    "mx",
+    "sg"
+  ],
+  "supportedLanguages": [
+    "en",
+    "it",
+    "ja"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-050/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-050/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-050-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-050",
+    "contact": "support@provider-050.example.com",
+    "onCall": "regional-escalation"
+  }
+}

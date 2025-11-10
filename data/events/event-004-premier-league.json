@@ -1,0 +1,23 @@
+{
+  "id": "event-004-premier-league",
+  "sport": "premier-league",
+  "title": "Premier League Derby Showdown",
+  "window": {
+    "start": "2025-11-20T18:00:00Z",
+    "end": "2025-11-20T22:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-033",
+    "provider-025",
+    "provider-030",
+    "provider-038"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "4K SDR primary feed",
+    "Player-specific iso cams",
+    "Enhanced data overlays enabled"
+  ]
+}

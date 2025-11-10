@@ -1,0 +1,43 @@
+{
+  "id": "provider-017",
+  "name": "Pulse Alpine Digital Hub",
+  "sportsFocus": [
+    "esports-league",
+    "la-liga"
+  ],
+  "coverageCountries": [
+    "br",
+    "it",
+    "us"
+  ],
+  "supportedLanguages": [
+    "fr",
+    "ja",
+    "zh"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-017/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "us",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-017/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-017-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-017",
+    "contact": "support@provider-017.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

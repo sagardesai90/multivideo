@@ -1,0 +1,42 @@
+{
+  "id": "provider-003",
+  "name": "Optimum Atlantic Arena",
+  "sportsFocus": [
+    "champions-league",
+    "esports-league"
+  ],
+  "coverageCountries": [
+    "br",
+    "es"
+  ],
+  "supportedLanguages": [
+    "ar",
+    "de",
+    "pt"
+  ],
+  "primaryCdn": "akamai",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-003/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "br",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-003/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-003-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-003",
+    "contact": "support@provider-003.example.com",
+    "onCall": "regional-escalation"
+  }
+}

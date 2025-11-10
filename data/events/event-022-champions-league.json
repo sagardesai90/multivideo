@@ -1,0 +1,21 @@
+{
+  "id": "event-022-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Knockout Thriller",
+  "window": {
+    "start": "2025-11-13T18:00:00Z",
+    "end": "2025-11-13T21:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-047",
+    "provider-043"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled",
+    "VR companion experience",
+    "Alternate commentary lane"
+  ]
+}

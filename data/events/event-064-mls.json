@@ -1,0 +1,23 @@
+{
+  "id": "event-064-mls",
+  "sport": "mls",
+  "title": "Mls Derby Day",
+  "window": {
+    "start": "2026-02-01T20:00:00Z",
+    "end": "2026-02-01T23:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-022",
+    "provider-051",
+    "provider-019",
+    "provider-037"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled",
+    "VR companion experience"
+  ]
+}

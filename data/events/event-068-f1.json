@@ -1,0 +1,21 @@
+{
+  "id": "event-068-f1",
+  "sport": "f1",
+  "title": "F1 Grand Prix Qualifying",
+  "window": {
+    "start": "2025-11-30T20:00:00Z",
+    "end": "2025-11-30T23:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Grand Prix Circuit",
+  "availableProviders": [
+    "provider-045",
+    "provider-036",
+    "provider-059"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "VR companion experience",
+    "Dolby Atmos mix available"
+  ]
+}

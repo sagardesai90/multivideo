@@ -1,0 +1,22 @@
+{
+  "id": "event-083-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Final Rehearsal",
+  "window": {
+    "start": "2026-01-27T22:00:00Z",
+    "end": "2026-01-28T00:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-047",
+    "provider-043",
+    "provider-036",
+    "provider-014"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "Alternate commentary lane"
+  ]
+}

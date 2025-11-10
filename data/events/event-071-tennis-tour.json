@@ -1,0 +1,21 @@
+{
+  "id": "event-071-tennis-tour",
+  "sport": "tennis-tour",
+  "title": "Tennis Tour Doubles Spotlight",
+  "window": {
+    "start": "2025-11-22T20:00:00Z",
+    "end": "2025-11-23T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-009",
+    "provider-033",
+    "provider-027"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "provider-016",
+  "name": "Velocity Panamerican Broadcast Exchange",
+  "sportsFocus": [
+    "cricket-world-series",
+    "esports-league",
+    "la-liga",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "au",
+    "es",
+    "za"
+  ],
+  "supportedLanguages": [
+    "pt"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-016/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-016/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-016-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-016/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-016/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-016-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-016/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "es",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-016/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-016-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-016",
+    "contact": "support@provider-016.example.com",
+    "onCall": "hybrid"
+  }
+}

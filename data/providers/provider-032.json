@@ -1,0 +1,46 @@
+{
+  "id": "provider-032",
+  "name": "Continental Steppe League Pass",
+  "sportsFocus": [
+    "cricket-world-series",
+    "cycling-world-tour",
+    "mls",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "br",
+    "it",
+    "jp",
+    "kr",
+    "mx"
+  ],
+  "supportedLanguages": [
+    "hi",
+    "it"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-032/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "jp",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-032/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-032-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-032",
+    "contact": "support@provider-032.example.com",
+    "onCall": "hybrid"
+  }
+}

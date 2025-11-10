@@ -1,0 +1,22 @@
+{
+  "id": "event-050-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series Test Match Session",
+  "window": {
+    "start": "2025-11-16T22:00:00Z",
+    "end": "2025-11-17T00:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-022",
+    "provider-052",
+    "provider-031",
+    "provider-034"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled",
+    "Enhanced data overlays enabled"
+  ]
+}

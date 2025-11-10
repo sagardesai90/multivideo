@@ -1,0 +1,22 @@
+{
+  "id": "event-021-nba",
+  "sport": "nba",
+  "title": "Nba Playoff Preview",
+  "window": {
+    "start": "2026-01-17T12:00:00Z",
+    "end": "2026-01-17T15:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-033",
+    "provider-051",
+    "provider-036",
+    "provider-002"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "4K SDR primary feed",
+    "VR companion experience"
+  ]
+}

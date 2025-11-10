@@ -1,0 +1,15 @@
+{
+  "id": "playlist-014-la-liga",
+  "sport": "la-liga",
+  "title": "La Liga Weekly Mix #15",
+  "curator": "audience-growth",
+  "targetWeeks": [
+    "2025-W38",
+    "2025-W44"
+  ],
+  "events": [
+    "event-019-la-liga",
+    "event-027-la-liga",
+    "event-037-la-liga"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "id": "provider-043",
+  "name": "Voyager Sahara Interactive",
+  "sportsFocus": [
+    "mls",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "ca",
+    "jp",
+    "kr",
+    "nz",
+    "sg"
+  ],
+  "supportedLanguages": [
+    "en",
+    "fr",
+    "ko"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-043/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-043/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-043-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-043/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-043/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-043-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-043/hls/master.m3u8",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-043/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-043-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-043",
+    "contact": "support@provider-043.example.com",
+    "onCall": "hybrid"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "event-013-nfl",
+  "sport": "nfl",
+  "title": "Nfl Wildcard Chase",
+  "window": {
+    "start": "2025-12-10T20:00:00Z",
+    "end": "2025-12-11T00:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-058",
+    "provider-054",
+    "provider-013"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams"
+  ]
+}

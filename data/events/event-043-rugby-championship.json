@@ -1,0 +1,22 @@
+{
+  "id": "event-043-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2025-12-24T15:00:00Z",
+    "end": "2025-12-24T19:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-021",
+    "provider-047",
+    "provider-056",
+    "provider-023"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "Enhanced data overlays enabled"
+  ]
+}

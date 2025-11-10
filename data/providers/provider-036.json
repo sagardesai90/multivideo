@@ -1,0 +1,46 @@
+{
+  "id": "provider-036",
+  "name": "Pulse Coastal Arena",
+  "sportsFocus": [
+    "f1",
+    "nfl",
+    "premier-league",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "jp",
+    "mx",
+    "sg",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "de",
+    "hi",
+    "it"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-036/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-036/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-036-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-036",
+    "contact": "support@provider-036.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

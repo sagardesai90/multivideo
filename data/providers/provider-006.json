@@ -1,0 +1,76 @@
+{
+  "id": "provider-006",
+  "name": "Auric Coastal Interactive",
+  "sportsFocus": [
+    "cricket-world-series",
+    "f1",
+    "nba",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "kr",
+    "us"
+  ],
+  "supportedLanguages": [
+    "fr"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-006/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "us",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-006/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-006-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-006/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "kr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-006/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-006-hls"
+    },
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-006/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "us",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-006/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-006-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-006",
+    "contact": "support@provider-006.example.com",
+    "onCall": "regional-escalation"
+  }
+}

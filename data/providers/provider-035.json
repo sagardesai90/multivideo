@@ -1,0 +1,44 @@
+{
+  "id": "provider-035",
+  "name": "Voyager Coastal Interactive",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "esports-league",
+    "mma",
+    "premier-league"
+  ],
+  "coverageCountries": [
+    "fr",
+    "kr"
+  ],
+  "supportedLanguages": [
+    "de",
+    "es",
+    "it"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-035/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "kr",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-035/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-035-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-035",
+    "contact": "support@provider-035.example.com",
+    "onCall": "regional-escalation"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "playlist-017-tennis-tour",
+  "sport": "tennis-tour",
+  "title": "Tennis Tour Weekly Mix #18",
+  "curator": "regional-scouts",
+  "targetWeeks": [
+    "2025-W06",
+    "2025-W07",
+    "2025-W09"
+  ],
+  "events": [
+    "event-057-tennis-tour",
+    "event-033-tennis-tour",
+    "event-032-tennis-tour",
+    "event-071-tennis-tour",
+    "event-028-tennis-tour"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "event-055-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series T20 Showcase",
+  "window": {
+    "start": "2025-11-18T20:00:00Z",
+    "end": "2025-11-19T00:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-036",
+    "provider-021"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Alternate commentary lane"
+  ]
+}

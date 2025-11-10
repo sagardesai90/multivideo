@@ -1,0 +1,20 @@
+{
+  "id": "event-076-f1",
+  "sport": "f1",
+  "title": "F1 Night Race Sprint",
+  "window": {
+    "start": "2025-11-30T18:00:00Z",
+    "end": "2025-11-30T21:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-052",
+    "provider-043"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "4K SDR primary feed",
+    "Dolby Atmos mix available"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "id": "provider-040",
+  "name": "Aurora Baltic Digital Hub",
+  "sportsFocus": [
+    "champions-league",
+    "cricket-world-series",
+    "f1",
+    "mls",
+    "premier-league"
+  ],
+  "coverageCountries": [
+    "fr",
+    "kr",
+    "mx",
+    "nz",
+    "us"
+  ],
+  "supportedLanguages": [
+    "fr",
+    "zh"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-040/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-040/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-040-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-040/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-040/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-040-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-040",
+    "contact": "support@provider-040.example.com",
+    "onCall": "regional-escalation"
+  }
+}

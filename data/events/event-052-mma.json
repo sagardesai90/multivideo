@@ -1,0 +1,22 @@
+{
+  "id": "event-052-mma",
+  "sport": "mma",
+  "title": "Mma Fight Night",
+  "window": {
+    "start": "2025-11-13T20:00:00Z",
+    "end": "2025-11-13T23:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-038",
+    "provider-020",
+    "provider-051"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "VR companion experience",
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "event-047-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Rivalry Cup",
+  "window": {
+    "start": "2025-12-17T20:00:00Z",
+    "end": "2025-12-18T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-009",
+    "provider-057",
+    "provider-017"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "Player-specific iso cams",
+    "Alternate commentary lane",
+    "4K SDR primary feed"
+  ]
+}

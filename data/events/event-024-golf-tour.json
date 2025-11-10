@@ -1,0 +1,20 @@
+{
+  "id": "event-024-golf-tour",
+  "sport": "golf-tour",
+  "title": "Golf Tour Championship Round",
+  "window": {
+    "start": "2025-12-18T12:00:00Z",
+    "end": "2025-12-18T14:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-021",
+    "provider-060"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Enhanced data overlays enabled"
+  ]
+}

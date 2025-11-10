@@ -1,0 +1,21 @@
+{
+  "id": "event-058-golf-tour",
+  "sport": "golf-tour",
+  "title": "Golf Tour Links Challenge",
+  "window": {
+    "start": "2025-11-16T18:00:00Z",
+    "end": "2025-11-16T21:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Coastal Dome",
+  "availableProviders": [
+    "provider-042",
+    "provider-017",
+    "provider-048"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled"
+  ]
+}

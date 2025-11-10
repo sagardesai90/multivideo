@@ -1,0 +1,45 @@
+{
+  "id": "provider-046",
+  "name": "Aurora Alpine Play Signals",
+  "sportsFocus": [
+    "champions-league",
+    "cycling-world-tour",
+    "f1",
+    "nfl",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "ca",
+    "fr"
+  ],
+  "supportedLanguages": [
+    "ar",
+    "it",
+    "pt"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-046/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-046/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-046-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-046",
+    "contact": "support@provider-046.example.com",
+    "onCall": "hybrid"
+  }
+}

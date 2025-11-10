@@ -1,0 +1,21 @@
+{
+  "id": "event-007-golf-tour",
+  "sport": "golf-tour",
+  "title": "Golf Tour Championship Round",
+  "window": {
+    "start": "2025-11-17T22:00:00Z",
+    "end": "2025-11-18T02:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-007",
+    "provider-036",
+    "provider-044"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "Alternate commentary lane",
+    "VR companion experience"
+  ]
+}

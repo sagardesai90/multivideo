@@ -1,0 +1,17 @@
+{
+  "id": "playlist-016-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Weekly Mix #17",
+  "curator": "automation-playbook",
+  "targetWeeks": [
+    "2025-W07",
+    "2025-W21",
+    "2025-W24",
+    "2025-W25"
+  ],
+  "events": [
+    "event-075-champions-league",
+    "event-022-champions-league",
+    "event-082-champions-league"
+  ]
+}

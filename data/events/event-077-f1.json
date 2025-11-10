@@ -1,0 +1,23 @@
+{
+  "id": "event-077-f1",
+  "sport": "f1",
+  "title": "F1 Grand Prix Qualifying",
+  "window": {
+    "start": "2026-01-26T12:00:00Z",
+    "end": "2026-01-26T14:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-046",
+    "provider-056",
+    "provider-004",
+    "provider-016"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "Player-specific iso cams",
+    "Player-specific iso cams",
+    "Dolby Atmos mix available"
+  ]
+}

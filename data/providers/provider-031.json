@@ -1,0 +1,59 @@
+{
+  "id": "provider-031",
+  "name": "Optimum Iberian Multi-View",
+  "sportsFocus": [
+    "esports-league",
+    "mma",
+    "nfl",
+    "tennis-tour"
+  ],
+  "coverageCountries": [
+    "br",
+    "fr"
+  ],
+  "supportedLanguages": [
+    "de"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-031/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-031/webrtc",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-031-webrtc"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-031/hls/master.m3u8",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "br",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-031/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-031-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-031",
+    "contact": "support@provider-031.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

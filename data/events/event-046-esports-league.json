@@ -1,0 +1,21 @@
+{
+  "id": "event-046-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League Regional Semifinal",
+  "window": {
+    "start": "2025-11-13T20:00:00Z",
+    "end": "2025-11-13T22:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-016",
+    "provider-014",
+    "provider-038"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "4K SDR primary feed",
+    "Alternate commentary lane"
+  ]
+}

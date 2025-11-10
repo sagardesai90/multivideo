@@ -1,0 +1,20 @@
+{
+  "id": "event-028-tennis-tour",
+  "sport": "tennis-tour",
+  "title": "Tennis Tour Grand Slam Warmup",
+  "window": {
+    "start": "2026-02-07T15:00:00Z",
+    "end": "2026-02-07T18:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-047",
+    "provider-056"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Alternate commentary lane"
+  ]
+}

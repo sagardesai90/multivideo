@@ -1,0 +1,20 @@
+{
+  "id": "event-049-boxing",
+  "sport": "boxing",
+  "title": "Boxing Title Defense",
+  "window": {
+    "start": "2025-11-27T12:00:00Z",
+    "end": "2025-11-27T14:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-036",
+    "provider-024",
+    "provider-049"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled"
+  ]
+}

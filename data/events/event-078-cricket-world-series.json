@@ -1,0 +1,23 @@
+{
+  "id": "event-078-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series Day/Night ODI",
+  "window": {
+    "start": "2025-11-28T12:00:00Z",
+    "end": "2025-11-28T16:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-037",
+    "provider-021",
+    "provider-039",
+    "provider-050"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "Dolby Atmos mix available",
+    "Alternate commentary lane",
+    "Dolby Atmos mix available"
+  ]
+}

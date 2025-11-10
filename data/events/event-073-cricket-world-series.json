@@ -1,0 +1,21 @@
+{
+  "id": "event-073-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series Day/Night ODI",
+  "window": {
+    "start": "2026-01-10T12:00:00Z",
+    "end": "2026-01-10T14:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-050",
+    "provider-009"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "VR companion experience",
+    "Player-specific iso cams",
+    "Alternate commentary lane"
+  ]
+}

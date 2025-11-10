@@ -1,0 +1,21 @@
+{
+  "id": "event-041-premier-league",
+  "sport": "premier-league",
+  "title": "Premier League Top Four Battle",
+  "window": {
+    "start": "2025-12-14T22:00:00Z",
+    "end": "2025-12-15T02:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-040",
+    "provider-041",
+    "provider-002"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Enhanced data overlays enabled",
+    "Alternate commentary lane"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "event-089-cricket-world-series",
+  "sport": "cricket-world-series",
+  "title": "Cricket World Series Test Match Session",
+  "window": {
+    "start": "2026-01-19T15:00:00Z",
+    "end": "2026-01-19T19:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-054",
+    "provider-055"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "4K SDR primary feed"
+  ]
+}

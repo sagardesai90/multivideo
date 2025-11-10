@@ -1,0 +1,78 @@
+{
+  "id": "provider-048",
+  "name": "Vantage Panamerican Play Signals",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "nfl",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "it",
+    "jp",
+    "sg",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "es",
+    "fr"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-048/webrtc/master.sdp",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "jp",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-048/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-048-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-048/dash/master.mpd",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "it",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-048/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-048-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-048/hls/master.m3u8",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-048/hls",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-048-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-048",
+    "contact": "support@provider-048.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

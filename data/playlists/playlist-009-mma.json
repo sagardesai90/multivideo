@@ -1,0 +1,16 @@
+{
+  "id": "playlist-009-mma",
+  "sport": "mma",
+  "title": "Mma Weekly Mix #10",
+  "curator": "editorial-team",
+  "targetWeeks": [
+    "2025-W10",
+    "2025-W38"
+  ],
+  "events": [
+    "event-052-mma",
+    "event-020-mma",
+    "event-063-mma",
+    "event-009-mma"
+  ]
+}

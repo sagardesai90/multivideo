@@ -1,0 +1,15 @@
+{
+  "id": "playlist-019-f1",
+  "sport": "f1",
+  "title": "F1 Weekly Mix #20",
+  "curator": "editorial-team",
+  "targetWeeks": [
+    "2025-W21",
+    "2025-W25",
+    "2025-W39",
+    "2025-W51"
+  ],
+  "events": [
+    "event-054-f1"
+  ]
+}

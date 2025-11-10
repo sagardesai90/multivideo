@@ -1,0 +1,21 @@
+{
+  "id": "event-019-la-liga",
+  "sport": "la-liga",
+  "title": "La Liga Catalan Fixture",
+  "window": {
+    "start": "2025-12-19T15:00:00Z",
+    "end": "2025-12-19T17:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-041",
+    "provider-051",
+    "provider-040"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "4K SDR primary feed",
+    "Player-specific iso cams"
+  ]
+}

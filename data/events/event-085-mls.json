@@ -1,0 +1,21 @@
+{
+  "id": "event-085-mls",
+  "sport": "mls",
+  "title": "Mls Conference Battle",
+  "window": {
+    "start": "2026-01-09T20:00:00Z",
+    "end": "2026-01-10T00:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-024",
+    "provider-033",
+    "provider-057"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "4K SDR primary feed",
+    "VR companion experience"
+  ]
+}

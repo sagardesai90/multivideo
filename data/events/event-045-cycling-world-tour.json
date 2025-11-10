@@ -1,0 +1,22 @@
+{
+  "id": "event-045-cycling-world-tour",
+  "sport": "cycling-world-tour",
+  "title": "Cycling World Tour Sprint Finish",
+  "window": {
+    "start": "2025-12-12T20:00:00Z",
+    "end": "2025-12-12T22:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-021",
+    "provider-013",
+    "provider-049",
+    "provider-011"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Player-specific iso cams"
+  ]
+}

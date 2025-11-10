@@ -1,0 +1,44 @@
+{
+  "id": "provider-039",
+  "name": "AllStar Balkan Multi-View",
+  "sportsFocus": [
+    "cycling-world-tour",
+    "nba"
+  ],
+  "coverageCountries": [
+    "ca",
+    "es",
+    "jp",
+    "mx"
+  ],
+  "supportedLanguages": [
+    "en",
+    "ja",
+    "zh"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-039/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "ca",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-039/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-039-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-039",
+    "contact": "support@provider-039.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

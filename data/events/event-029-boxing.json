@@ -1,0 +1,21 @@
+{
+  "id": "event-029-boxing",
+  "sport": "boxing",
+  "title": "Boxing Main Event Bout",
+  "window": {
+    "start": "2026-02-04T12:00:00Z",
+    "end": "2026-02-04T16:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-052",
+    "provider-048",
+    "provider-044",
+    "provider-011"
+  ],
+  "presentationNotes": [
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled"
+  ]
+}

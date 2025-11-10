@@ -1,0 +1,22 @@
+{
+  "id": "event-062-f1",
+  "sport": "f1",
+  "title": "F1 Circuit Practice",
+  "window": {
+    "start": "2025-12-03T12:00:00Z",
+    "end": "2025-12-03T15:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-051",
+    "provider-032",
+    "provider-012"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "4K SDR primary feed",
+    "4K SDR primary feed",
+    "Alternate commentary lane"
+  ]
+}

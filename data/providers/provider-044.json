@@ -1,0 +1,80 @@
+{
+  "id": "provider-044",
+  "name": "AllStar Steppe Streaming Cooperative",
+  "sportsFocus": [
+    "boxing",
+    "champions-league",
+    "cricket-world-series",
+    "cycling-world-tour"
+  ],
+  "coverageCountries": [
+    "jp",
+    "kr",
+    "mx",
+    "nz"
+  ],
+  "supportedLanguages": [
+    "ar",
+    "en",
+    "es"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-044/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-044/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-044-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-044/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-044/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-044-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-044/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-044/hls",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-044-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-044",
+    "contact": "support@provider-044.example.com",
+    "onCall": "regional-escalation"
+  }
+}

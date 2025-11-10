@@ -1,0 +1,20 @@
+{
+  "id": "event-070-esports-league",
+  "sport": "esports-league",
+  "title": "Esports League Showmatch",
+  "window": {
+    "start": "2026-01-23T15:00:00Z",
+    "end": "2026-01-23T19:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-055",
+    "provider-034",
+    "provider-029"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Dolby Atmos mix available"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "id": "provider-053",
+  "name": "Velocity Cascadia Streaming Cooperative",
+  "sportsFocus": [
+    "cricket-world-series",
+    "golf-tour",
+    "mls",
+    "mma",
+    "rugby-championship"
+  ],
+  "coverageCountries": [
+    "br",
+    "mx"
+  ],
+  "supportedLanguages": [
+    "ar"
+  ],
+  "primaryCdn": "akamai",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-053/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-053/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-053-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-053/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-053/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-053-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-053/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "mx",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-053/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-053-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-053",
+    "contact": "support@provider-053.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

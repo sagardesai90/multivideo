@@ -1,0 +1,21 @@
+{
+  "id": "event-048-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Group Stage Spotlight",
+  "window": {
+    "start": "2026-01-21T22:00:00Z",
+    "end": "2026-01-22T00:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-005",
+    "provider-025",
+    "provider-033"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Alternate commentary lane",
+    "Enhanced data overlays enabled"
+  ]
+}

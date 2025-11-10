@@ -1,0 +1,21 @@
+{
+  "id": "event-080-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Final Rehearsal",
+  "window": {
+    "start": "2025-11-17T20:00:00Z",
+    "end": "2025-11-17T23:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-045",
+    "provider-027",
+    "provider-010"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled"
+  ]
+}

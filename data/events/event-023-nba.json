@@ -1,0 +1,21 @@
+{
+  "id": "event-023-nba",
+  "sport": "nba",
+  "title": "Nba Conference Spotlight",
+  "window": {
+    "start": "2026-01-19T18:00:00Z",
+    "end": "2026-01-19T21:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-031",
+    "provider-041",
+    "provider-012",
+    "provider-052"
+  ],
+  "presentationNotes": [
+    "4K SDR primary feed",
+    "VR companion experience"
+  ]
+}

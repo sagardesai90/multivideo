@@ -1,0 +1,21 @@
+{
+  "id": "event-037-la-liga",
+  "sport": "la-liga",
+  "title": "La Liga Catalan Fixture",
+  "window": {
+    "start": "2026-02-06T20:00:00Z",
+    "end": "2026-02-07T00:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Prime Pavilion",
+  "availableProviders": [
+    "provider-041",
+    "provider-038",
+    "provider-012",
+    "provider-050"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Enhanced data overlays enabled"
+  ]
+}

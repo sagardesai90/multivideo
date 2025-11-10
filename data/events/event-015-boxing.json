@@ -1,0 +1,21 @@
+{
+  "id": "event-015-boxing",
+  "sport": "boxing",
+  "title": "Boxing Undercard Showcase",
+  "window": {
+    "start": "2026-01-20T18:00:00Z",
+    "end": "2026-01-20T20:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Liberty Field",
+  "availableProviders": [
+    "provider-006",
+    "provider-049",
+    "provider-011"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Enhanced data overlays enabled",
+    "Dolby Atmos mix available"
+  ]
+}

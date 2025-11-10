@@ -1,0 +1,21 @@
+{
+  "id": "event-054-f1",
+  "sport": "f1",
+  "title": "F1 Grand Prix Qualifying",
+  "window": {
+    "start": "2026-02-08T22:00:00Z",
+    "end": "2026-02-09T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-021",
+    "provider-027",
+    "provider-010"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "Dolby Atmos mix available",
+    "Player-specific iso cams"
+  ]
+}

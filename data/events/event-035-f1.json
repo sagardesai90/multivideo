@@ -1,0 +1,21 @@
+{
+  "id": "event-035-f1",
+  "sport": "f1",
+  "title": "F1 Grand Prix Qualifying",
+  "window": {
+    "start": "2025-11-28T15:00:00Z",
+    "end": "2025-11-28T17:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Union Ground",
+  "availableProviders": [
+    "provider-036",
+    "provider-037",
+    "provider-024"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Dolby Atmos mix available",
+    "Enhanced data overlays enabled"
+  ]
+}

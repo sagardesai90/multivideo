@@ -1,0 +1,20 @@
+{
+  "id": "event-042-boxing",
+  "sport": "boxing",
+  "title": "Boxing Undercard Showcase",
+  "window": {
+    "start": "2025-12-12T20:00:00Z",
+    "end": "2025-12-13T00:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-005",
+    "provider-045",
+    "provider-004"
+  ],
+  "presentationNotes": [
+    "Player-specific iso cams",
+    "Player-specific iso cams"
+  ]
+}

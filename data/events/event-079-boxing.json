@@ -1,0 +1,21 @@
+{
+  "id": "event-079-boxing",
+  "sport": "boxing",
+  "title": "Boxing Title Defense",
+  "window": {
+    "start": "2026-01-02T15:00:00Z",
+    "end": "2026-01-02T18:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Aurora Center",
+  "availableProviders": [
+    "provider-038",
+    "provider-057",
+    "provider-048",
+    "provider-059"
+  ],
+  "presentationNotes": [
+    "VR companion experience",
+    "VR companion experience"
+  ]
+}

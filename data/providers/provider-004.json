@@ -1,0 +1,45 @@
+{
+  "id": "provider-004",
+  "name": "Continental Andean Multi-View",
+  "sportsFocus": [
+    "esports-league",
+    "f1",
+    "mls"
+  ],
+  "coverageCountries": [
+    "jp",
+    "nz",
+    "sg",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "fr",
+    "hi",
+    "zh"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-004/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "nz",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-004/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-004-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-004",
+    "contact": "support@provider-004.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

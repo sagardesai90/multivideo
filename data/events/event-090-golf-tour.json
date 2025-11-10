@@ -1,0 +1,22 @@
+{
+  "id": "event-090-golf-tour",
+  "sport": "golf-tour",
+  "title": "Golf Tour Links Challenge",
+  "window": {
+    "start": "2025-11-28T20:00:00Z",
+    "end": "2025-11-29T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "venue": "Heritage Park",
+  "availableProviders": [
+    "provider-010",
+    "provider-001",
+    "provider-014",
+    "provider-033"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled"
+  ]
+}

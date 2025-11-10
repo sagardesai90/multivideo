@@ -1,0 +1,43 @@
+{
+  "id": "provider-038",
+  "name": "Aurora Baltic League Pass",
+  "sportsFocus": [
+    "boxing",
+    "golf-tour"
+  ],
+  "coverageCountries": [
+    "au",
+    "de",
+    "kr",
+    "us"
+  ],
+  "supportedLanguages": [
+    "ko",
+    "zh"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-038/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "de",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-038/webrtc",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-038-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-038",
+    "contact": "support@provider-038.example.com",
+    "onCall": "regional-escalation"
+  }
+}

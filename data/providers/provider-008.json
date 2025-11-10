@@ -1,0 +1,43 @@
+{
+  "id": "provider-008",
+  "name": "Global Pacific Multi-View",
+  "sportsFocus": [
+    "esports-league",
+    "f1",
+    "mma",
+    "premier-league"
+  ],
+  "coverageCountries": [
+    "jp",
+    "uk"
+  ],
+  "supportedLanguages": [
+    "es",
+    "zh"
+  ],
+  "primaryCdn": "cloudfront",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-008/webrtc/master.sdp",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "uk",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-008/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-008-webrtc"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-008",
+    "contact": "support@provider-008.example.com",
+    "onCall": "hybrid"
+  }
+}

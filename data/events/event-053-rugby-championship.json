@@ -1,0 +1,22 @@
+{
+  "id": "event-053-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2026-01-23T22:00:00Z",
+    "end": "2026-01-24T00:00:00Z",
+    "timezone": "Australia/Sydney"
+  },
+  "venue": "Metropolitan Arena",
+  "availableProviders": [
+    "provider-011",
+    "provider-034",
+    "provider-041"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "Player-specific iso cams",
+    "Dolby Atmos mix available",
+    "VR companion experience"
+  ]
+}

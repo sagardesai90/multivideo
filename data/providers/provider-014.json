@@ -1,0 +1,60 @@
+{
+  "id": "provider-014",
+  "name": "Voyager Nordic Interactive",
+  "sportsFocus": [
+    "esports-league",
+    "mma"
+  ],
+  "coverageCountries": [
+    "au",
+    "us",
+    "za"
+  ],
+  "supportedLanguages": [
+    "es",
+    "ja",
+    "zh"
+  ],
+  "primaryCdn": "fastly",
+  "activeEndpoints": [
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-014/hls/master.m3u8",
+      "auth": {
+        "type": "signed-url",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-014/hls",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-014-hls"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-014/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "za",
+        "latencyClass": "low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-014/dash",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-014-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-014",
+    "contact": "support@provider-014.example.com",
+    "onCall": "follow-the-sun"
+  }
+}

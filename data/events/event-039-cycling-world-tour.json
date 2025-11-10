@@ -1,0 +1,21 @@
+{
+  "id": "event-039-cycling-world-tour",
+  "sport": "cycling-world-tour",
+  "title": "Cycling World Tour Mountain Stage",
+  "window": {
+    "start": "2025-12-06T18:00:00Z",
+    "end": "2025-12-06T22:00:00Z",
+    "timezone": "Europe/London"
+  },
+  "venue": "Liberty Field",
+  "availableProviders": [
+    "provider-041",
+    "provider-020"
+  ],
+  "presentationNotes": [
+    "Enhanced data overlays enabled",
+    "4K SDR primary feed",
+    "Enhanced data overlays enabled",
+    "VR companion experience"
+  ]
+}

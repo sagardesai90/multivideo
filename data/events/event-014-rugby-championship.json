@@ -1,0 +1,19 @@
+{
+  "id": "event-014-rugby-championship",
+  "sport": "rugby-championship",
+  "title": "Rugby Championship Tri-Nations Classic",
+  "window": {
+    "start": "2026-01-14T20:00:00Z",
+    "end": "2026-01-15T00:00:00Z",
+    "timezone": "America/New_York"
+  },
+  "venue": "Velocity Arena",
+  "availableProviders": [
+    "provider-052",
+    "provider-039"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "4K SDR primary feed"
+  ]
+}

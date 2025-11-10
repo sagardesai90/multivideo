@@ -1,0 +1,23 @@
+{
+  "id": "event-026-champions-league",
+  "sport": "champions-league",
+  "title": "Champions League Knockout Thriller",
+  "window": {
+    "start": "2025-12-30T20:00:00Z",
+    "end": "2025-12-30T23:00:00Z",
+    "timezone": "Asia/Singapore"
+  },
+  "venue": "Summit Stadium",
+  "availableProviders": [
+    "provider-032",
+    "provider-024",
+    "provider-060",
+    "provider-052"
+  ],
+  "presentationNotes": [
+    "Alternate commentary lane",
+    "4K SDR primary feed",
+    "VR companion experience",
+    "Player-specific iso cams"
+  ]
+}

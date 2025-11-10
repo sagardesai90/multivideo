@@ -1,0 +1,61 @@
+{
+  "id": "provider-026",
+  "name": "AllStar Andean Sports Network",
+  "sportsFocus": [
+    "champions-league",
+    "cycling-world-tour",
+    "golf-tour",
+    "nfl"
+  ],
+  "coverageCountries": [
+    "es",
+    "fr",
+    "mx"
+  ],
+  "supportedLanguages": [
+    "en",
+    "ko"
+  ],
+  "primaryCdn": "cloudflare",
+  "activeEndpoints": [
+    {
+      "protocol": "webrtc",
+      "url": "https://streams.example.com/provider-026/webrtc/master.sdp",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "ultra-low"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-026/webrtc",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-026-webrtc"
+    },
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-026/dash/master.mpd",
+      "auth": {
+        "type": "mutual-tls",
+        "ttlSeconds": 900
+      },
+      "ingest": {
+        "region": "fr",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-026/dash",
+        "observability": "grafana"
+      },
+      "streamKey": "provider-026-dash"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-026",
+    "contact": "support@provider-026.example.com",
+    "onCall": "hybrid"
+  }
+}

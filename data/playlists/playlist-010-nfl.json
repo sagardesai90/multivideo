@@ -1,0 +1,15 @@
+{
+  "id": "playlist-010-nfl",
+  "sport": "nfl",
+  "title": "Nfl Weekly Mix #11",
+  "curator": "editorial-team",
+  "targetWeeks": [
+    "2025-W11",
+    "2025-W16",
+    "2025-W37"
+  ],
+  "events": [
+    "event-013-nfl",
+    "event-059-nfl"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "id": "provider-021",
+  "name": "Pulse Iberian Digital Hub",
+  "sportsFocus": [
+    "boxing",
+    "champions-league",
+    "f1"
+  ],
+  "coverageCountries": [
+    "au",
+    "de",
+    "jp",
+    "nz",
+    "sg"
+  ],
+  "supportedLanguages": [
+    "ja",
+    "zh"
+  ],
+  "primaryCdn": "akamai",
+  "activeEndpoints": [
+    {
+      "protocol": "dash",
+      "url": "https://streams.example.com/provider-021/dash/master.mpd",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 3600
+      },
+      "ingest": {
+        "region": "sg",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-021/dash",
+        "observability": "datadog"
+      },
+      "streamKey": "provider-021-dash"
+    },
+    {
+      "protocol": "hls",
+      "url": "https://streams.example.com/provider-021/hls/master.m3u8",
+      "auth": {
+        "type": "token",
+        "ttlSeconds": 1800
+      },
+      "ingest": {
+        "region": "au",
+        "latencyClass": "standard"
+      },
+      "monitoring": {
+        "healthcheck": "https://status.example.com/provider-021/hls",
+        "observability": "newrelic"
+      },
+      "streamKey": "provider-021-hls"
+    }
+  ],
+  "supportModel": {
+    "statusPage": "https://status.example.com/provider-021",
+    "contact": "support@provider-021.example.com",
+    "onCall": "hybrid"
+  }
+}
