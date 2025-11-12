@@ -132,6 +132,15 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const isMobileDevice = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+    return /android|iphone|ipad|ipod|mobile/i.test(userAgent);
+  }, []);
+  const sandboxAttributes = 'allow-same-origin allow-scripts allow-forms allow-presentation';
   const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
   const proxiedLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -698,7 +707,9 @@ export default function VideoPlayer({
                 src={useProxy ? getProxyUrl(url) : url}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-presentation"
+                {...(isMobileDevice
+                  ? { sandbox: sandboxAttributes }
+                  : {})}
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
