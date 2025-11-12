@@ -65,6 +65,18 @@ export default function VideoInput({
     // Input will be cleared by the useEffect when videoSlots updates
   };
 
+  const handleRefresh = () => {
+    const currentUrl = videoSlots[selectedQuadrant]?.url;
+    if (currentUrl) {
+      // Temporarily clear the URL, then restore it to force a reload
+      onSetUrl(selectedQuadrant, '');
+      // Use setTimeout to ensure the clear happens first
+      setTimeout(() => {
+        onSetUrl(selectedQuadrant, currentUrl);
+      }, 50);
+    }
+  };
+
   const handleShare = async () => {
     // Create URL with video links encoded
     const params = new URLSearchParams();
@@ -221,13 +233,36 @@ export default function VideoInput({
         </button>
 
         {videoSlots[selectedQuadrant]?.url && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors flex-shrink-0 whitespace-nowrap"
-          >
-            Clear
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors flex-shrink-0 whitespace-nowrap"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              className="group w-10 h-10 rounded-lg font-semibold transition-all bg-zinc-800 hover:bg-zinc-700 flex-shrink-0 flex items-center justify-center"
+              title="Refresh video"
+            >
+              <svg
+                className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M3 21v-5h5" />
+              </svg>
+            </button>
+          </>
         )}
 
         {/* Share Button - iOS style share icon at the right end */}
