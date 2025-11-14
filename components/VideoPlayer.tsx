@@ -444,7 +444,14 @@ export default function VideoPlayer({
       <div
         className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {isHovered && (
+          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            {quadrantIndex + 1}
+          </div>
+        )}
         <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
           <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-red-900/20 flex items-center justify-center flex-shrink-0">
             <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -465,7 +472,14 @@ export default function VideoPlayer({
       <div
         className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
         onClick={onFocus}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
+        {isHovered && (
+          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            {quadrantIndex + 1}
+          </div>
+        )}
         <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
           <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
             <span className="text-zinc-500 text-base font-semibold">{quadrantIndex + 1}</span>
@@ -489,6 +503,11 @@ export default function VideoPlayer({
     >
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+          {isHovered && (
+            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {quadrantIndex + 1}
+            </div>
+          )}
           <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full overflow-y-auto">
             <div className="mb-3 flex-shrink-0">
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-red-900/20 flex items-center justify-center">
@@ -537,6 +556,11 @@ export default function VideoPlayer({
             }}
             title={`Video player ${quadrantIndex + 1}`}
           />
+          {isHovered && (
+            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {quadrantIndex + 1}
+            </div>
+          )}
           {showMutedIndicator && (
             <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
               🔇 Muted
@@ -558,9 +582,14 @@ export default function VideoPlayer({
             }}
           />
           {isHovered && (
-            <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
-              🔴 LIVE
-            </div>
+            <>
+              <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                {quadrantIndex + 1}
+              </div>
+              <div className="absolute top-14 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
+                🔴 LIVE
+              </div>
+            </>
           )}
           {showMutedIndicator && (
             <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
@@ -582,6 +611,11 @@ export default function VideoPlayer({
               height: '100%',
             }}
           />
+          {isHovered && (
+            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {quadrantIndex + 1}
+            </div>
+          )}
           {showMutedIndicator && (
             <div className="absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
               🔇 Muted
@@ -592,6 +626,11 @@ export default function VideoPlayer({
         <div className="relative w-full h-full">
           {iframeBlocked ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+              {isHovered && (
+                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {quadrantIndex + 1}
+                </div>
+              )}
               <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
                 <div className="mb-3 flex-shrink-0">
                   <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/50 flex items-center justify-center">
@@ -640,13 +679,18 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
+              {isHovered && (
+                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {quadrantIndex + 1}
+                </div>
+              )}
               {showProxiedLabel && useProxy && (
-                <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+                <div className="absolute top-14 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
                   🔄 PROXIED
                 </div>
               )}
               {isHovered && !useProxy && (
-                <div className="absolute top-4 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
+                <div className="absolute top-14 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                   🌐 STREAMING SITE
                 </div>
               )}
@@ -663,6 +707,11 @@ export default function VideoPlayer({
         <div className="relative w-full h-full">
           {iframeBlocked ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+              {isHovered && (
+                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {quadrantIndex + 1}
+                </div>
+              )}
               <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
                 <div className="mb-3 flex-shrink-0">
                   <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/50 flex items-center justify-center">
@@ -713,13 +762,18 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
+              {isHovered && (
+                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {quadrantIndex + 1}
+                </div>
+              )}
               {showProxiedLabel && useProxy && (
-                <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
+                <div className="absolute top-14 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300">
                   🔄 PROXIED
                 </div>
               )}
               {isHovered && !useProxy && (
-                <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
+                <div className="absolute top-14 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                   🌐 WEB PAGE
                 </div>
               )}
@@ -733,6 +787,11 @@ export default function VideoPlayer({
         </div>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
+          {isHovered && (
+            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {quadrantIndex + 1}
+            </div>
+          )}
           <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
             <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
