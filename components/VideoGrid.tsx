@@ -21,6 +21,7 @@ export default function VideoGrid() {
     { url: '', isExpanded: false },
   ]);
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const [audioFocusIndex, setAudioFocusIndex] = useState<number>(0);
   const [hideTopBar, setHideTopBar] = useState<boolean>(false);
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
   const [showControlsButton, setShowControlsButton] = useState<boolean>(true);
@@ -316,7 +317,32 @@ export default function VideoGrid() {
       )
     );
     setFocusedIndex(quadrantIndex);
+    if (url) {
+      setAudioFocusIndex(quadrantIndex);
+    }
   };
+
+  const handleFocusSlot = React.useCallback((slotIndex: number) => {
+    setFocusedIndex(slotIndex);
+    if (videoSlots[slotIndex]?.url) {
+      setAudioFocusIndex(slotIndex);
+    }
+  }, [videoSlots]);
+
+  useEffect(() => {
+    if (!videoSlots.length) return;
+    const currentHasUrl = Boolean(videoSlots[audioFocusIndex]?.url);
+    if (currentHasUrl) {
+      return;
+    }
+
+    const firstWithUrl = videoSlots.findIndex((slot) => Boolean(slot.url));
+    const fallbackIndex = firstWithUrl !== -1 ? firstWithUrl : 0;
+
+    if (fallbackIndex !== audioFocusIndex) {
+      setAudioFocusIndex(fallbackIndex);
+    }
+  }, [videoSlots, audioFocusIndex]);
 
   // Mouse-based drag and drop handlers (works better with iframes than HTML5 DnD)
   const handleMouseDown = React.useCallback((position: number) => {
@@ -396,13 +422,13 @@ export default function VideoGrid() {
   const handleToggleExpand = (quadrantIndex: number) => {
     // In split mode, clicking toggles focus instead of expand
     if (layoutMode === 'split') {
-      setFocusedIndex(quadrantIndex);
+      handleFocusSlot(quadrantIndex);
       return;
     }
 
     // In expanded mode, clicking always expands the clicked video
     if (layoutMode === 'expanded') {
-      setFocusedIndex(quadrantIndex);
+      handleFocusSlot(quadrantIndex);
       setVideoSlots((slots) =>
         slots.map((slot, i) => ({
           ...slot,
@@ -500,7 +526,7 @@ export default function VideoGrid() {
             onRemoveSlot={handleRemoveSlot}
             singleVideoMode={singleVideoMode}
             onToggleSingleVideoMode={() => setSingleVideoMode(!singleVideoMode)}
-            onFocusChange={setFocusedIndex}
+            onFocusChange={handleFocusSlot}
           />
         </div>
       )}
@@ -559,8 +585,8 @@ export default function VideoGrid() {
                     quadrantIndex={index}
                     isFocused={true}
                     isExpanded={false}
-                    isAudioEnabled={true}
-                    onFocus={() => setFocusedIndex(index)}
+                    isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
+                    onFocus={() => handleFocusSlot(index)}
                     onToggleExpand={() => handleToggleExpand(index)}
                   />
                 </div>
@@ -733,8 +759,8 @@ export default function VideoGrid() {
                   quadrantIndex={slotIndex}
                   isFocused={focusedIndex === slotIndex}
                   isExpanded={videoSlots[slotIndex].isExpanded}
-                  isAudioEnabled={focusedIndex === slotIndex}
-                  onFocus={() => setFocusedIndex(slotIndex)}
+                  isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
+                  onFocus={() => handleFocusSlot(slotIndex)}
                   onToggleExpand={() => handleToggleExpand(slotIndex)}
                   isDraggedOver={dragOverPosition === position}
                   isDragging={draggedPosition === position}
