@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 
 interface VideoPlayerProps {
   url: string;
@@ -32,6 +32,7 @@ function detectVideoType(url: string): string {
   // Detect streaming sites (check before generic)
   if (lowerUrl.includes('crackstreams') ||
     lowerUrl.includes('streameast') ||
+    lowerUrl.includes('istreameast') ||
     lowerUrl.includes('methstreams') ||
     lowerUrl.includes('stream2watch') ||
     lowerUrl.includes('strikeout') ||
@@ -133,6 +134,9 @@ export default function VideoPlayer({
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
   const [showProxiedLabel, setShowProxiedLabel] = useState(false);
+  const [isExtractingStream, setIsExtractingStream] = useState(false);
+  const [extractedStream, setExtractedStream] = useState<{ url: string; type: 'iframe' | 'hls' } | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -144,16 +148,28 @@ export default function VideoPlayer({
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
     return /android|iphone|ipad|ipod|mobile/i.test(userAgent);
   }, []);
+  const isCrackstreamsUrl = useMemo(() => {
+    if (!url) return false;
+    return url.toLowerCase().includes('crackstreams');
+  }, [url]);
   const sandboxAttributes = 'allow-same-origin allow-scripts allow-forms allow-presentation';
   const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
   const proxiedLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoType = detectVideoType(url);
-
-  // Get proxy URL
   const getProxyUrl = (targetUrl: string) => {
     return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   };
+  const streamingBaseUrl = useMemo(() => {
+    if (videoType === 'streaming-site' && extractedStream?.url) {
+      return extractedStream.url;
+    }
+    return url;
+  }, [url, videoType, extractedStream?.url]);
+  const streamingIframeSrc = useMemo(() => {
+    if (!streamingBaseUrl) return '';
+    return useProxy ? getProxyUrl(streamingBaseUrl) : streamingBaseUrl;
+  }, [streamingBaseUrl, useProxy]);
 
   // Track orientation changes
   useEffect(() => {
@@ -218,28 +234,116 @@ export default function VideoPlayer({
     };
   }, [useProxy, videoType]);
 
-  // Check if iframe is blocked by X-Frame-Options
-  useEffect(() => {
-    if ((videoType === 'streaming-site' || videoType === 'generic') && url) {
-      // Wait a bit for iframe to load
-      const timer = setTimeout(() => {
-        try {
-          if (iframeRef.current) {
-            // Try to access iframe content - will throw if blocked
-            const iframeDoc = iframeRef.current.contentDocument;
-            if (!iframeDoc || !iframeDoc.body || iframeDoc.body.innerHTML === '') {
-              setIframeBlocked(true);
-            }
-          }
-        } catch (e) {
-          // X-Frame-Options blocked the iframe
-          setIframeBlocked(true);
-        }
-      }, 2000);
-
-      return () => clearTimeout(timer);
+  const isSameOriginUrl = useCallback((target?: string | null) => {
+    if (!target || typeof window === 'undefined') return false;
+    try {
+      const parsed = new URL(target, window.location.href);
+      return parsed.origin === window.location.origin;
+    } catch {
+      return false;
     }
-  }, [url, videoType, quadrantIndex]);
+  }, []);
+
+  const shouldSkipEmbeddingCheck = useMemo(() => {
+    if (!streamingBaseUrl) return false;
+    try {
+      const hostname = new URL(streamingBaseUrl).hostname;
+      const allowlist = ['embednow.top', 'embednow.online', 'embedstream.tv'];
+      return allowlist.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
+    } catch {
+      return false;
+    }
+  }, [streamingBaseUrl]);
+
+  // Check if iframe is blocked by X-Frame-Options (skip for trusted cross-origin hosts)
+  useEffect(() => {
+    const iframeTarget = videoType === 'streaming-site' ? streamingIframeSrc : url;
+    const shouldCheck =
+      (videoType === 'streaming-site' || videoType === 'generic') &&
+      iframeTarget &&
+      (isSameOriginUrl(iframeTarget) || !shouldSkipEmbeddingCheck);
+
+    if (!shouldCheck) {
+      setIframeBlocked(false);
+      return;
+    }
+
+    setIframeBlocked(false);
+    const timer = setTimeout(() => {
+      try {
+        if (iframeRef.current) {
+          const iframeDoc = iframeRef.current.contentDocument;
+          if (!iframeDoc || !iframeDoc.body || iframeDoc.body.innerHTML === '') {
+            setIframeBlocked(true);
+          }
+        }
+      } catch (e) {
+        setIframeBlocked(true);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [
+    url,
+    videoType,
+    quadrantIndex,
+    streamingBaseUrl,
+    streamingIframeSrc,
+    isSameOriginUrl,
+    shouldSkipEmbeddingCheck,
+  ]);
+  useEffect(() => {
+    if (!url || !isCrackstreamsUrl || videoType !== 'streaming-site') {
+      setIsExtractingStream(false);
+      setExtractionError(null);
+      setExtractedStream(null);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const extractStream = async () => {
+      setIsExtractingStream(true);
+      setExtractionError(null);
+      try {
+        const response = await fetch(`/api/extract/crackstreams?url=${encodeURIComponent(url)}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (response.ok && data?.embedUrl) {
+          setExtractedStream({
+            url: data.embedUrl,
+            type: data.streamType === 'hls' ? 'hls' : 'iframe',
+          });
+        } else {
+          setExtractionError(data?.error || 'Unable to extract CrackStreams player');
+          setExtractedStream(null);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
+        setExtractionError(err instanceof Error ? err.message : 'Unable to extract CrackStreams player');
+        setExtractedStream(null);
+      } finally {
+        if (!cancelled) {
+          setIsExtractingStream(false);
+        }
+      }
+    };
+
+    extractStream();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [url, isCrackstreamsUrl, videoType]);
 
   // Get embed URL based on video type - recalculate when isAudioEnabled changes
   const embedUrl = useMemo(() => {
@@ -709,12 +813,24 @@ export default function VideoPlayer({
             </div>
           ) : (
             <>
+              {isExtractingStream && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-sm font-semibold z-30">
+                  Fetching CrackStreams player...
+                </div>
+              )}
+              {extractionError && !isExtractingStream && (
+                <div className="absolute bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none z-30 shadow-lg">
+                  ⚠️ {extractionError}
+                </div>
+              )}
               <iframe
                 ref={iframeRef}
-                src={useProxy ? getProxyUrl(url) : url}
+                src={streamingIframeSrc || (useProxy && url ? getProxyUrl(url) : url)}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-presentation"
+                {...(isMobileDevice
+                  ? { sandbox: sandboxAttributes }
+                  : {})}
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
