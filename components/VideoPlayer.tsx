@@ -10,49 +10,51 @@ interface VideoPlayerProps {
   onFocus: () => void;
   onToggleExpand: () => void;
   isAudioEnabled?: boolean; // Only the focused video should have audio enabled
+  isDraggedOver?: boolean; // Whether another slot is being dragged over this one
+  isDragging?: boolean; // Whether this slot is currently being dragged
 }
 
 function detectVideoType(url: string): string {
   if (!url) return 'none';
-  
+
   const lowerUrl = url.toLowerCase();
-  
+
   if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
   if (lowerUrl.includes('twitch.tv')) return 'twitch';
   if (lowerUrl.includes('netflix.com')) return 'netflix';
-  
+
   // Check for HLS streams
   if (lowerUrl.endsWith('.m3u8') || lowerUrl.includes('.m3u8?')) return 'hls';
-  
+
   // Check for direct video files
   if (url.match(/\.(mp4|webm|ogg)(\?|$)/i)) return 'video';
-  
+
   // Detect streaming sites (check before generic)
-  if (lowerUrl.includes('crackstreams') || 
-      lowerUrl.includes('streameast') || 
-      lowerUrl.includes('methstreams') ||
-      lowerUrl.includes('stream2watch') ||
-      lowerUrl.includes('strikeout') ||
-      lowerUrl.includes('sportsurge') ||
-      lowerUrl.includes('buffstreams') ||
-      lowerUrl.includes('nbastreams') ||
-      lowerUrl.includes('nflbite')) {
+  if (lowerUrl.includes('crackstreams') ||
+    lowerUrl.includes('streameast') ||
+    lowerUrl.includes('methstreams') ||
+    lowerUrl.includes('stream2watch') ||
+    lowerUrl.includes('strikeout') ||
+    lowerUrl.includes('sportsurge') ||
+    lowerUrl.includes('buffstreams') ||
+    lowerUrl.includes('nbastreams') ||
+    lowerUrl.includes('nflbite')) {
     return 'streaming-site';
   }
-  
+
   return 'generic';
 }
 
 function getYouTubeEmbedUrl(url: string, mute: boolean = false): string {
   let videoId: string | null = null;
   let baseUrl = '';
-  
+
   // Handle youtube.com/watch?v=VIDEO_ID
   const watchMatch = url.match(/[?&]v=([^&]+)/);
   if (watchMatch) {
     videoId = watchMatch[1];
     baseUrl = `https://www.youtube.com/embed/${videoId}`;
-  } 
+  }
   // Handle youtu.be/VIDEO_ID
   else {
     const shortMatch = url.match(/youtu\.be\/([^?]+)/);
@@ -69,7 +71,7 @@ function getYouTubeEmbedUrl(url: string, mute: boolean = false): string {
       return url;
     }
   }
-  
+
   // Add parameters
   const params = new URLSearchParams();
   if (mute) {
@@ -82,7 +84,7 @@ function getYouTubeEmbedUrl(url: string, mute: boolean = false): string {
       params.set(key, value);
     }
   });
-  
+
   const paramString = params.toString();
   return paramString ? `${baseUrl}?${paramString}` : baseUrl;
 }
@@ -92,7 +94,7 @@ function getTwitchEmbedUrl(url: string, mute: boolean = false): string {
   if (mute) {
     params.set('muted', 'true');
   }
-  
+
   // Handle twitch.tv/channelname
   const channelMatch = url.match(/twitch\.tv\/([^/?]+)/);
   if (channelMatch && !url.includes('/videos/')) {
@@ -100,7 +102,7 @@ function getTwitchEmbedUrl(url: string, mute: boolean = false): string {
     params.set('parent', window.location.hostname);
     return `https://player.twitch.tv/?${params.toString()}`;
   }
-  
+
   // Handle twitch.tv/videos/VIDEO_ID
   const videoMatch = url.match(/videos\/(\d+)/);
   if (videoMatch) {
@@ -108,7 +110,7 @@ function getTwitchEmbedUrl(url: string, mute: boolean = false): string {
     params.set('parent', window.location.hostname);
     return `https://player.twitch.tv/?${params.toString()}`;
   }
-  
+
   return url;
 }
 
@@ -120,6 +122,8 @@ export default function VideoPlayer({
   onFocus,
   onToggleExpand,
   isAudioEnabled = true,
+  isDraggedOver = false,
+  isDragging = false,
 }: VideoPlayerProps) {
   const [error, setError] = useState<string | null>(null);
   const [iframeBlocked, setIframeBlocked] = useState(false);
@@ -145,12 +149,12 @@ export default function VideoPlayer({
   const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
   const proxiedLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoType = detectVideoType(url);
-  
+
   // Get proxy URL
   const getProxyUrl = (targetUrl: string) => {
     return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   };
-  
+
   // Track orientation changes
   useEffect(() => {
     const checkOrientation = () => {
@@ -172,7 +176,7 @@ export default function VideoPlayer({
       window.removeEventListener('resize', checkOrientation);
     };
   }, []);
-  
+
   // Reset state when URL changes
   React.useEffect(() => {
     setIframeBlocked(false);
@@ -184,7 +188,7 @@ export default function VideoPlayer({
       proxiedLabelTimerRef.current = null;
     }
   }, [url, videoType, quadrantIndex]);
-  
+
   // Show proxied label when proxy is enabled, then hide after 2.5 seconds
   useEffect(() => {
     // Clear any existing timer
@@ -192,11 +196,11 @@ export default function VideoPlayer({
       clearTimeout(proxiedLabelTimerRef.current);
       proxiedLabelTimerRef.current = null;
     }
-    
+
     if (useProxy && (videoType === 'streaming-site' || videoType === 'generic')) {
       // Show the label when proxy is enabled
       setShowProxiedLabel(true);
-      
+
       // Hide after 2.5 seconds
       proxiedLabelTimerRef.current = setTimeout(() => {
         setShowProxiedLabel(false);
@@ -205,7 +209,7 @@ export default function VideoPlayer({
       // Hide immediately when proxy is disabled
       setShowProxiedLabel(false);
     }
-    
+
     return () => {
       if (proxiedLabelTimerRef.current) {
         clearTimeout(proxiedLabelTimerRef.current);
@@ -250,7 +254,7 @@ export default function VideoPlayer({
         return url;
     }
   }, [url, videoType, isAudioEnabled]);
-  
+
   // Handle muting for video elements (HLS, direct video files)
   useEffect(() => {
     if (videoRef.current && (videoType === 'hls' || videoType === 'video')) {
@@ -262,7 +266,7 @@ export default function VideoPlayer({
       }
     }
   }, [isAudioEnabled, videoType, url]);
-  
+
   // Handle muting for generic iframes via postMessage (for proxy-based streaming sites)
   useEffect(() => {
     if (iframeRef.current && (videoType === 'streaming-site' || videoType === 'generic') && useProxy) {
@@ -275,24 +279,24 @@ export default function VideoPlayer({
           );
         }
       };
-      
+
       // Send immediately
       sendMuteMessage();
-      
+
       // Also send after a delay to ensure iframe is fully loaded
       const timer = setTimeout(sendMuteMessage, 1000);
-      
+
       // Listen for iframe load events
       const iframe = iframeRef.current;
       iframe.addEventListener('load', sendMuteMessage);
-      
+
       return () => {
         clearTimeout(timer);
         iframe.removeEventListener('load', sendMuteMessage);
       };
     }
   }, [isAudioEnabled, videoType, useProxy]);
-  
+
   // Show muted indicator when video becomes muted, then hide after 5 seconds
   useEffect(() => {
     // Clear any existing timer
@@ -300,11 +304,11 @@ export default function VideoPlayer({
       clearTimeout(mutedTimerRef.current);
       mutedTimerRef.current = null;
     }
-    
+
     if (!isAudioEnabled) {
       // Show the indicator when video becomes muted
       setShowMutedIndicator(true);
-      
+
       // Hide it after 5 seconds
       mutedTimerRef.current = setTimeout(() => {
         setShowMutedIndicator(false);
@@ -313,7 +317,7 @@ export default function VideoPlayer({
       // Hide immediately when audio is enabled
       setShowMutedIndicator(false);
     }
-    
+
     return () => {
       if (mutedTimerRef.current) {
         clearTimeout(mutedTimerRef.current);
@@ -333,20 +337,20 @@ export default function VideoPlayer({
           // Use hls.js for other browsers
           try {
             const Hls = (await import('hls.js')).default;
-            
+
             if (Hls.isSupported()) {
               const hls = new Hls({
                 enableWorker: true,
                 lowLatencyMode: true,
               });
-              
+
               hls.loadSource(url);
               hls.attachMedia(videoRef.current);
-              
+
               hls.on(Hls.Events.MANIFEST_PARSED, () => {
                 // HLS stream loaded successfully
               });
-              
+
               hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
                   // Determine error type
@@ -358,12 +362,12 @@ export default function VideoPlayer({
                   } else if (data.details === 'manifestLoadError') {
                     errorMsg = 'CORS blocked: Stream cannot be accessed from this origin. Try using a browser extension to bypass CORS.';
                   }
-                  
+
                   setError(errorMsg);
                   hls.destroy();
                 }
               });
-              
+
               hlsRef.current = hls;
             } else {
               setError('HLS streaming not supported in this browser');
@@ -395,17 +399,17 @@ export default function VideoPlayer({
       clearTimeout(expandButtonTimerRef.current);
       expandButtonTimerRef.current = null;
     }
-    
+
     // Don't show expand button in portrait mode
     if (isPortrait) {
       setShowExpandButton(false);
       return;
     }
-    
+
     // Show expand button on hover/interaction
     if (isHovered && !error && url) {
       setShowExpandButton(true);
-      
+
       // Hide after 5 seconds
       expandButtonTimerRef.current = setTimeout(() => {
         setShowExpandButton(false);
@@ -414,7 +418,7 @@ export default function VideoPlayer({
       // Hide immediately when not hovered
       setShowExpandButton(false);
     }
-    
+
     return () => {
       if (expandButtonTimerRef.current) {
         clearTimeout(expandButtonTimerRef.current);
@@ -422,7 +426,7 @@ export default function VideoPlayer({
       }
     };
   }, [isHovered, isPortrait, error, url]);
-  
+
   // Also show expand button on touch/interaction (for mobile)
   const handleInteraction = () => {
     if (!isPortrait && !error && url) {
@@ -468,13 +472,28 @@ export default function VideoPlayer({
   }
 
   if (!url) {
+    // Generate class names based on drag state for empty slots
+    const emptyDragStateClasses = isDraggedOver
+      ? 'ring-4 ring-blue-500 ring-opacity-75'
+      : isDragging
+        ? 'opacity-50'
+        : '';
+
     return (
       <div
-        className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
+        className={`relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all ${emptyDragStateClasses}`}
         onClick={onFocus}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
+        {/* Drag overlay indicator for empty slots */}
+        {isDraggedOver && (
+          <div className="absolute inset-0 bg-blue-500/20 z-30 pointer-events-none flex items-center justify-center">
+            <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-lg">
+              Drop here to move
+            </div>
+          </div>
+        )}
         {isHovered && (
           <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {quadrantIndex + 1}
@@ -490,10 +509,22 @@ export default function VideoPlayer({
     );
   }
 
+  // Generate class names based on drag state
+  const dragStateClasses = isDraggedOver
+    ? 'ring-4 ring-blue-500 ring-opacity-75'
+    : isDragging
+      ? 'opacity-50'
+      : '';
+
   return (
     <div
-      className="relative w-full h-full bg-black cursor-pointer transition-all"
+      className={`relative w-full h-full bg-black cursor-pointer transition-all ${dragStateClasses}`}
       onClick={(e) => {
+        // Don't trigger click during drag operations
+        if (isDragging || isDraggedOver) {
+          e.stopPropagation();
+          return;
+        }
         onFocus();
         handleInteraction();
       }}
@@ -501,6 +532,14 @@ export default function VideoPlayer({
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleInteraction}
     >
+      {/* Drag overlay indicator */}
+      {isDraggedOver && (
+        <div className="absolute inset-0 bg-blue-500/20 z-30 pointer-events-none flex items-center justify-center">
+          <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-lg">
+            Drop here to swap
+          </div>
+        </div>
+      )}
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
           {isHovered && (
@@ -518,7 +557,7 @@ export default function VideoPlayer({
               <h3 className="text-white text-sm font-semibold mb-1 px-2">Error Loading Video</h3>
               <p className="text-zinc-400 text-xs leading-tight px-2 line-clamp-2">{error}</p>
             </div>
-            
+
             {error.includes('CORS') && (
               <div className="bg-zinc-800/50 rounded-lg p-3 mt-2 text-left border border-zinc-700/50 flex-shrink-0 w-full max-w-[90%]">
                 <p className="text-zinc-300 text-xs font-medium mb-1.5">Possible solutions:</p>
@@ -547,8 +586,8 @@ export default function VideoPlayer({
             src={embedUrl}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            style={{ 
-              border: 'none', 
+            style={{
+              border: 'none',
               overflow: 'hidden',
               width: '100%',
               height: '100%',
@@ -574,8 +613,8 @@ export default function VideoPlayer({
             controls
             muted={!isAudioEnabled}
             className="w-full h-full"
-            style={{ 
-              objectFit: 'cover', 
+            style={{
+              objectFit: 'cover',
               backgroundColor: '#000',
               width: '100%',
               height: '100%',
@@ -605,7 +644,7 @@ export default function VideoPlayer({
             controls
             muted={!isAudioEnabled}
             className="w-full h-full"
-            style={{ 
+            style={{
               objectFit: 'cover',
               width: '100%',
               height: '100%',
