@@ -10,6 +10,9 @@ interface VideoSlot {
   isExpanded: boolean;
 }
 
+// Track the display order of slots (which slot appears in which position)
+// slotOrder[position] = slotIndex (e.g., slotOrder[0] = 2 means slot 2 is displayed in position 0)
+
 export default function VideoGrid() {
   const [videoSlots, setVideoSlots] = useState<VideoSlot[]>([
     { url: '', isExpanded: false },
@@ -25,6 +28,15 @@ export default function VideoGrid() {
   const [singleVideoMode, setSingleVideoMode] = useState<boolean>(false);
   const [numSlots, setNumSlots] = useState<number>(4);
   const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Slot order - maps visual position to slot index
+  // This allows us to reorder visually without changing URL data (prevents stream reload)
+  const [slotOrder, setSlotOrder] = useState<number[]>([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+
+  // Drag and drop state - using custom mouse-based approach for iframe compatibility
+  const [draggedPosition, setDraggedPosition] = useState<number | null>(null);
+  const [dragOverPosition, setDragOverPosition] = useState<number | null>(null);
+  const slotRefs = React.useRef<(HTMLDivElement | null)[]>([]);
 
   // Adjustable border positions (percentages)
   const [gridVerticalSplit, setGridVerticalSplit] = useState<number>(50); // 50% - vertical split in 2x2 grid
@@ -127,6 +139,26 @@ export default function VideoGrid() {
   useEffect(() => {
     localStorage.setItem('videoSlots', JSON.stringify(videoSlots));
   }, [videoSlots]);
+
+  // Save slot order to localStorage
+  useEffect(() => {
+    localStorage.setItem('slotOrder', JSON.stringify(slotOrder));
+  }, [slotOrder]);
+
+  // Load slot order from localStorage on mount
+  useEffect(() => {
+    const savedSlotOrder = localStorage.getItem('slotOrder');
+    if (savedSlotOrder) {
+      try {
+        const parsed = JSON.parse(savedSlotOrder);
+        if (Array.isArray(parsed)) {
+          setSlotOrder(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to load saved slot order:', e);
+      }
+    }
+  }, []);
 
   // Save number of slots and single video mode
   useEffect(() => {
@@ -285,6 +317,81 @@ export default function VideoGrid() {
     );
     setFocusedIndex(quadrantIndex);
   };
+
+  // Mouse-based drag and drop handlers (works better with iframes than HTML5 DnD)
+  const handleMouseDown = React.useCallback((position: number) => {
+    console.log(`[MouseDown] Position ${position} - Starting drag`);
+    setDraggedPosition(position);
+  }, []);
+
+  const handleMouseEnter = React.useCallback((position: number) => {
+    if (draggedPosition !== null && draggedPosition !== position) {
+      console.log(`[MouseEnter] Position ${position} - Hovering over (from position ${draggedPosition})`);
+      setDragOverPosition(position);
+    }
+  }, [draggedPosition]);
+
+  const handleMouseLeave = React.useCallback((position: number) => {
+    if (dragOverPosition === position) {
+      setDragOverPosition(null);
+    }
+  }, [dragOverPosition]);
+
+  const handleMouseUp = React.useCallback((targetPosition: number) => {
+    const sourcePosition = draggedPosition;
+    console.log(`[MouseUp] Position ${targetPosition} - Mouse up (from position ${sourcePosition})`);
+
+    // Reset visual states
+    setDraggedPosition(null);
+    setDragOverPosition(null);
+
+    // Validate positions
+    if (sourcePosition === null || sourcePosition === targetPosition) {
+      console.log(`[MouseUp] Cancelled - same position or null source`);
+      return;
+    }
+
+    if (sourcePosition < 0 || sourcePosition >= numSlots ||
+      targetPosition < 0 || targetPosition >= numSlots) {
+      console.log(`[MouseUp] Cancelled - invalid positions`);
+      return;
+    }
+
+    console.log(`[Swap] Swapping position ${sourcePosition} with position ${targetPosition}`);
+
+    // Swap the slot order - this changes which slot appears in which position
+    // WITHOUT changing the slot's URL data, so streams don't reload!
+    setSlotOrder((order) => {
+      const newOrder = [...order];
+      const temp = newOrder[sourcePosition];
+      newOrder[sourcePosition] = newOrder[targetPosition];
+      newOrder[targetPosition] = temp;
+      console.log(`[Swap] New order: ${newOrder.slice(0, numSlots).join(', ')}`);
+      return newOrder;
+    });
+
+    // Update focused index to follow the dragged slot
+    const draggedSlotIndex = slotOrder[sourcePosition];
+    const targetSlotIndex = slotOrder[targetPosition];
+    if (focusedIndex === draggedSlotIndex) {
+      // The focused slot moved to a new position, update focusedIndex to the slot that's now there
+      // Actually, focusedIndex refers to slot index, not position, so we don't need to change it
+    }
+  }, [draggedPosition, numSlots, slotOrder, focusedIndex]);
+
+  // Global mouse up to cancel drag if released outside a slot
+  React.useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (draggedPosition !== null) {
+        console.log(`[GlobalMouseUp] Drag cancelled - released outside slots`);
+        setDraggedPosition(null);
+        setDragOverPosition(null);
+      }
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [draggedPosition]);
 
   const handleToggleExpand = (quadrantIndex: number) => {
     // In split mode, clicking toggles focus instead of expand
@@ -463,15 +570,22 @@ export default function VideoGrid() {
           }
 
           // Multi-video mode: render all slots
+          // Each slot always renders the same data (to prevent reloads)
+          // We use slotOrder to determine CSS positioning
           const anyExpanded = videoSlots.some(s => s.isExpanded);
           const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
           const slotsToRender = Array.from({ length: numSlots }, (_, i) => i);
 
-          return slotsToRender.map((index) => {
-            if (index >= videoSlots.length) return null;
+          return slotsToRender.map((slotIndex) => {
+            if (slotIndex >= videoSlots.length) return null;
 
-            // Calculate position based on current layout mode and orientation
-            // In portrait mode, remove horizontal padding to fill full width
+            // Find which position this slot should appear in
+            const position = slotOrder.findIndex(si => si === slotIndex);
+            if (position === -1 || position >= numSlots) return null;
+
+            // Calculate visual position based on current layout mode and orientation
+            // Use 'position' for layout calculations (where it appears on screen)
+            // Use 'slotIndex' for data access (which video slot's data to show)
             let style: React.CSSProperties;
 
             if (isPortrait) {
@@ -479,7 +593,7 @@ export default function VideoGrid() {
               const heightPercent = 100 / numSlots;
               style = {
                 position: 'absolute',
-                top: `${index * heightPercent}%`,
+                top: `${position * heightPercent}%`,
                 left: 0,
                 right: 0,
                 height: `${heightPercent}%`,
@@ -492,14 +606,16 @@ export default function VideoGrid() {
             } else if (layoutMode === 'split') {
               // Landscape split mode
               style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-              if (index === focusedIndex) {
+              // Find which position the focused slot is in
+              const focusedPosition = slotOrder.findIndex(si => si === focusedIndex);
+              if (slotIndex === focusedIndex) {
                 // Top video (focused)
                 style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
               } else {
-                // Bottom videos
-                const otherIndices = slotsToRender.filter(i => i !== focusedIndex);
-                const bottomPos = otherIndices.indexOf(index);
-                const widthPercent = 100 / Math.max(1, otherIndices.length);
+                // Bottom videos - calculate position among non-focused slots
+                const otherSlots = slotsToRender.filter(si => si !== focusedIndex);
+                const bottomPos = otherSlots.indexOf(slotIndex);
+                const widthPercent = 100 / Math.max(1, otherSlots.length);
                 style = {
                   ...style,
                   top: `${splitHorizontalSplit}%`,
@@ -511,14 +627,14 @@ export default function VideoGrid() {
             } else if (anyExpanded) {
               // Expanded mode (works in both grid and expanded layout modes)
               style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-              if (index === expandedIndex) {
+              if (slotIndex === expandedIndex) {
                 // Left expanded video
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
               } else {
                 // Right stacked videos
-                const otherIndices = slotsToRender.filter(i => i !== expandedIndex);
-                const stackPos = otherIndices.indexOf(index);
-                const heightPercent = 100 / Math.max(1, otherIndices.length);
+                const otherSlots = slotsToRender.filter(si => si !== expandedIndex);
+                const stackPos = otherSlots.indexOf(slotIndex);
+                const heightPercent = 100 / Math.max(1, otherSlots.length);
                 style = {
                   ...style,
                   top: `${stackPos * heightPercent}%`,
@@ -530,11 +646,11 @@ export default function VideoGrid() {
             } else {
               // Grid mode
               style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-              // Grid mode: calculate grid dimensions
+              // Grid mode: calculate grid dimensions based on position
               const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
               const rows = Math.ceil(numSlots / cols);
-              const row = Math.floor(index / cols);
-              const col = index % cols;
+              const row = Math.floor(position / cols);
+              const col = position % cols;
 
               if (numSlots === 1) {
                 style = { ...style, top: 0, left: 0, right: 0, bottom: 0 };
@@ -562,16 +678,66 @@ export default function VideoGrid() {
             }
 
             return (
-              <div key={index} style={style}>
+              <div
+                key={slotIndex}
+                ref={(el) => { slotRefs.current[slotIndex] = el; }}
+                style={style}
+                className="relative group"
+              >
+                {/* Drag handle - centered at the top for consistent access */}
+                <div
+                  className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/70 hover:bg-black/90 text-white p-2 rounded transition-colors select-none transition-opacity duration-200 ${draggedPosition === position ? 'cursor-grabbing opacity-100' : 'cursor-grab opacity-0 group-hover:opacity-100'
+                    }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent text selection
+                    e.stopPropagation();
+                    handleMouseDown(position);
+                  }}
+                  title="Drag to swap position"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 9h4v4H3zM9.5 9h5v4h-5zM17 9h4v4h-4z" />
+                  </svg>
+                </div>
+
+                {/* Drop zone overlay - only active during drag, covers the entire slot to capture mouse events */}
+                {draggedPosition !== null && draggedPosition !== position && (
+                  <div
+                    className={`absolute inset-0 ${dragOverPosition === position ? 'bg-blue-500/30' : 'bg-black/20'
+                      }`}
+                    style={{ zIndex: 9999 }}
+                    onMouseEnter={() => handleMouseEnter(position)}
+                    onMouseLeave={() => handleMouseLeave(position)}
+                    onMouseUp={(e) => {
+                      e.stopPropagation();
+                      handleMouseUp(position);
+                    }}
+                  >
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium pointer-events-none">
+                      {dragOverPosition === position ? 'Release to swap' : 'Drop here'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show indicator on the slot being dragged */}
+                {draggedPosition === position && (
+                  <div className="absolute inset-0 bg-yellow-500/20 pointer-events-none" style={{ zIndex: 9998 }}>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                      Dragging...
+                    </div>
+                  </div>
+                )}
                 <VideoPlayer
-                  key={`video-player-${index}`}
-                  url={videoSlots[index].url}
-                  quadrantIndex={index}
-                  isFocused={focusedIndex === index}
-                  isExpanded={videoSlots[index].isExpanded}
-                  isAudioEnabled={focusedIndex === index}
-                  onFocus={() => setFocusedIndex(index)}
-                  onToggleExpand={() => handleToggleExpand(index)}
+                  key={`video-player-${slotIndex}`}
+                  url={videoSlots[slotIndex].url}
+                  quadrantIndex={slotIndex}
+                  isFocused={focusedIndex === slotIndex}
+                  isExpanded={videoSlots[slotIndex].isExpanded}
+                  isAudioEnabled={focusedIndex === slotIndex}
+                  onFocus={() => setFocusedIndex(slotIndex)}
+                  onToggleExpand={() => handleToggleExpand(slotIndex)}
+                  isDraggedOver={dragOverPosition === position}
+                  isDragging={draggedPosition === position}
                 />
               </div>
             );
