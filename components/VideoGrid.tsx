@@ -188,6 +188,23 @@ export default function VideoGrid() {
     if (focusedIndex >= numSlots) {
       setFocusedIndex(Math.max(0, numSlots - 1));
     }
+
+    // Keep slotOrder in sync with the current number of slots so that:
+    // - We never reference slot indexes that no longer exist after deletions
+    // - Every visible position maps to a valid slot index, avoiding "missing" slots
+    setSlotOrder((order) => {
+      // Remove any indices that are now out of range
+      let newOrder = order.filter((slotIndex) => slotIndex < numSlots);
+
+      // Ensure we have a mapping for every slot index [0, numSlots)
+      const requiredIndices = Array.from({ length: numSlots }, (_, i) => i);
+      const missing = requiredIndices.filter((i) => !newOrder.includes(i));
+
+      // Append any missing indices to the end to maintain relative order
+      newOrder = [...newOrder, ...missing];
+
+      return newOrder;
+    });
   }, [numSlots]);
 
   const handleAddSlot = () => {

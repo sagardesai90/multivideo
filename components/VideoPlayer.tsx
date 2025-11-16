@@ -133,6 +133,7 @@ export default function VideoPlayer({
   const [showMutedIndicator, setShowMutedIndicator] = useState(false);
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
   const [showExpandButton, setShowExpandButton] = useState(false);
+  const [showMobileLabels, setShowMobileLabels] = useState(false);
   const [showProxiedLabel, setShowProxiedLabel] = useState(false);
   const [isExtractingStream, setIsExtractingStream] = useState(false);
   const [extractedStream, setExtractedStream] = useState<{ url: string; type: 'iframe' | 'hls' } | null>(null);
@@ -140,13 +141,24 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const isMobileDevice = useMemo(() => {
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  useEffect(() => {
     if (typeof window === 'undefined') {
-      return false;
+      return;
     }
 
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera || '';
-    return /android|iphone|ipad|ipod|mobile/i.test(userAgent);
+    const detectMobile = () => {
+      const ua = navigator.userAgent || navigator.vendor || (window as any).opera || '';
+      const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || (navigator as any).msMaxTouchPoints > 0;
+      return /android|iphone|ipad|ipod|mobile/i.test(ua) || coarsePointer || hasTouch;
+    };
+
+    setIsMobileDevice(detectMobile());
+
+    return () => {
+      setIsMobileDevice(false);
+    };
   }, []);
   const isCrackstreamsUrl = useMemo(() => {
     if (!url) return false;
@@ -156,6 +168,7 @@ export default function VideoPlayer({
   const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
   const proxiedLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mobileLabelTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoType = detectVideoType(url);
   const getProxyUrl = (targetUrl: string) => {
     return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
@@ -233,6 +246,40 @@ export default function VideoPlayer({
       }
     };
   }, [useProxy, videoType]);
+
+  const triggerMobileLabels = useCallback(() => {
+    if (!isMobileDevice) {
+      return;
+    }
+
+    setShowMobileLabels(true);
+
+    if (mobileLabelTimerRef.current) {
+      clearTimeout(mobileLabelTimerRef.current);
+    }
+
+    mobileLabelTimerRef.current = setTimeout(() => {
+      setShowMobileLabels(false);
+      mobileLabelTimerRef.current = null;
+    }, 3500);
+  }, [isMobileDevice]);
+
+  useEffect(() => {
+    return () => {
+      if (mobileLabelTimerRef.current) {
+        clearTimeout(mobileLabelTimerRef.current);
+        mobileLabelTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mobileLabelTimerRef.current) {
+      clearTimeout(mobileLabelTimerRef.current);
+      mobileLabelTimerRef.current = null;
+    }
+    setShowMobileLabels(false);
+  }, [url]);
 
   const isSameOriginUrl = useCallback((target?: string | null) => {
     if (!target || typeof window === 'undefined') return false;
@@ -532,7 +579,8 @@ export default function VideoPlayer({
   }, [isHovered, isPortrait, error, url]);
 
   // Also show expand button on touch/interaction (for mobile)
-  const handleInteraction = () => {
+  const handleInteraction = useCallback(() => {
+    triggerMobileLabels();
     if (!isPortrait && !error && url) {
       setShowExpandButton(true);
       // Clear existing timer
@@ -544,18 +592,24 @@ export default function VideoPlayer({
         setShowExpandButton(false);
       }, 5000);
     }
-  };
+  }, [triggerMobileLabels, isPortrait, error, url]);
+
+  const showHoverLabels = isMobileDevice ? showMobileLabels : isHovered;
 
   // Check for Netflix - MUST be after all hooks
   if (videoType === 'netflix') {
     return (
       <div
         className="relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all"
-        onClick={onFocus}
+        onClick={() => {
+          onFocus();
+          handleInteraction();
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleInteraction}
       >
-        {isHovered && (
+        {showHoverLabels && (
           <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {quadrantIndex + 1}
           </div>
@@ -586,9 +640,13 @@ export default function VideoPlayer({
     return (
       <div
         className={`relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all ${emptyDragStateClasses}`}
-        onClick={onFocus}
+        onClick={() => {
+          onFocus();
+          handleInteraction();
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleInteraction}
       >
         {/* Drag overlay indicator for empty slots */}
         {isDraggedOver && (
@@ -598,7 +656,7 @@ export default function VideoPlayer({
             </div>
           </div>
         )}
-        {isHovered && (
+        {showHoverLabels && (
           <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {quadrantIndex + 1}
           </div>
@@ -646,7 +704,7 @@ export default function VideoPlayer({
       )}
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
-          {isHovered && (
+          {showHoverLabels && (
             <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
@@ -699,7 +757,7 @@ export default function VideoPlayer({
             }}
             title={`Video player ${quadrantIndex + 1}`}
           />
-          {isHovered && (
+          {showHoverLabels && (
             <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
@@ -724,7 +782,7 @@ export default function VideoPlayer({
               height: '100%',
             }}
           />
-          {isHovered && (
+          {showHoverLabels && (
             <>
               <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                 {quadrantIndex + 1}
@@ -754,7 +812,7 @@ export default function VideoPlayer({
               height: '100%',
             }}
           />
-          {isHovered && (
+          {showHoverLabels && (
             <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
@@ -769,7 +827,7 @@ export default function VideoPlayer({
         <div className="relative w-full h-full">
           {iframeBlocked ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
-              {isHovered && (
+              {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
@@ -834,7 +892,7 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
-              {isHovered && (
+              {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
@@ -844,7 +902,7 @@ export default function VideoPlayer({
                   🔄 PROXIED
                 </div>
               )}
-              {isHovered && !useProxy && (
+              {showHoverLabels && !useProxy && (
                 <div className="absolute top-14 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                   🌐 STREAMING SITE
                 </div>
@@ -862,7 +920,7 @@ export default function VideoPlayer({
         <div className="relative w-full h-full">
           {iframeBlocked ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
-              {isHovered && (
+              {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
@@ -917,7 +975,7 @@ export default function VideoPlayer({
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
-              {isHovered && (
+              {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
@@ -927,7 +985,7 @@ export default function VideoPlayer({
                   🔄 PROXIED
                 </div>
               )}
-              {isHovered && !useProxy && (
+              {showHoverLabels && !useProxy && (
                 <div className="absolute top-14 left-4 bg-blue-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                   🌐 WEB PAGE
                 </div>
@@ -942,7 +1000,7 @@ export default function VideoPlayer({
         </div>
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
-          {isHovered && (
+          {showHoverLabels && (
             <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
