@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+function buildBaseHref(target: URL): string {
+  const url = new URL(target.toString());
+  url.hash = '';
+  let pathname = url.pathname;
+
+  if (!pathname.endsWith('/')) {
+    const lastSlash = pathname.lastIndexOf('/');
+    pathname = lastSlash === -1 ? '/' : pathname.slice(0, lastSlash + 1);
+  }
+
+  if (!pathname.endsWith('/')) {
+    pathname += '/';
+  }
+
+  return `${url.origin}${pathname}`;
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const targetUrl = searchParams.get('url');
@@ -9,13 +26,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const parsedTargetUrl = new URL(targetUrl);
+
     // Fetch the target URL
     const response = await fetch(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': new URL(targetUrl).origin,
+        'Referer': parsedTargetUrl.origin,
       },
     });
 
@@ -336,19 +355,23 @@ export async function GET(request: NextRequest) {
       </style>
     `;
 
+    const shouldInjectBase = !/<base\s/i.test(html);
+    const baseHref = buildBaseHref(parsedTargetUrl);
+    const combinedInjection = `${shouldInjectBase ? `<base href="${baseHref}">` : ''}${injectedCode}`;
+
     // Inject the code at the very beginning - BEFORE any other scripts can run
     if (html.includes('<head>')) {
       // Inject immediately after opening <head> tag
-      html = html.replace('<head>', `<head>${injectedCode}`);
+      html = html.replace('<head>', `<head>${combinedInjection}`);
     } else if (html.includes('<html>')) {
       // Inject immediately after opening <html> tag
-      html = html.replace('<html>', `<html>${injectedCode}`);
+      html = html.replace('<html>', `<html>${combinedInjection}`);
     } else if (html.includes('<head')) {
       // Handle <head with attributes
-      html = html.replace(/<head([^>]*)>/, `<head$1>${injectedCode}`);
+      html = html.replace(/<head([^>]*)>/, `<head$1>${combinedInjection}`);
     } else {
       // Last resort - prepend to entire HTML
-      html = injectedCode + html;
+      html = combinedInjection + html;
     }
 
     // Create a new response with modified headers
