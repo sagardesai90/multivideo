@@ -179,8 +179,12 @@ export default function VideoPlayer({
     }
     return url;
   }, [url, videoType, extractedStream?.url]);
+  // Prefer direct iframe loading (client-side) so requests come from user's browser IP
+  // Only use proxy if X-Frame-Options blocks direct embedding
   const streamingIframeSrc = useMemo(() => {
     if (!streamingBaseUrl) return '';
+    // Always try direct loading first - browser makes request from user's IP
+    // Proxy is only used as fallback if X-Frame-Options blocks embedding
     return useProxy ? getProxyUrl(streamingBaseUrl) : streamingBaseUrl;
   }, [streamingBaseUrl, useProxy]);
 
@@ -207,9 +211,11 @@ export default function VideoPlayer({
   }, []);
 
   // Reset state when URL changes
+  // Always start with direct iframe loading (client-side) - this ensures requests
+  // come from the user's browser IP, not Vercel's server IP
   React.useEffect(() => {
     setIframeBlocked(false);
-    setUseProxy(false);
+    setUseProxy(false); // Always start with direct loading (client-side)
     setShowProxiedLabel(false);
     // Clear proxied label timer
     if (proxiedLabelTimerRef.current) {
@@ -825,7 +831,7 @@ export default function VideoPlayer({
         </div>
       ) : videoType === 'streaming-site' ? (
         <div className="relative w-full h-full">
-          {iframeBlocked ? (
+          {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
@@ -841,12 +847,13 @@ export default function VideoPlayer({
                   </div>
                   <h3 className="text-white text-sm font-semibold mb-1 px-2">Embedding Restricted</h3>
                   <p className="text-zinc-400 text-xs leading-tight px-2">
-                    Site prevents embedded playback
+                    Site prevents embedded playback. Requests are made from your browser.
                   </p>
                 </div>
                 <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
                     onClick={() => {
+                      // Try proxy as fallback (may be blocked on Vercel)
                       setUseProxy(true);
                       setIframeBlocked(false);
                     }}
@@ -855,16 +862,29 @@ export default function VideoPlayer({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span>Try Proxy</span>
+                    <span>Try Proxy (May Fail)</span>
                   </button>
                   <button
-                    onClick={() => window.open(url, '_blank')}
+                    onClick={() => {
+                      // Force direct loading - retry with direct iframe
+                      setIframeBlocked(false);
+                      setUseProxy(false);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Retry Direct</span>
+                  </button>
+                  <button
+                    onClick={() => window.open(streamingBaseUrl || url, '_blank')}
                     className="w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-zinc-700 flex items-center justify-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    <span>New Tab</span>
+                    <span>Open in New Tab</span>
                   </button>
                 </div>
               </div>
@@ -883,7 +903,9 @@ export default function VideoPlayer({
               )}
               <iframe
                 ref={iframeRef}
-                src={streamingIframeSrc || (useProxy && url ? getProxyUrl(url) : url)}
+                // Always prefer direct URL (client-side) - browser makes request from user's IP
+                // Only use proxy if explicitly enabled (as fallback for X-Frame-Options)
+                src={streamingIframeSrc || url}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 {...(isMobileDevice
@@ -907,18 +929,14 @@ export default function VideoPlayer({
                   🌐 STREAMING SITE
                 </div>
               )}
-              {showMutedIndicator && (
-                <div className={`absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300 ${showMutedIndicator ? 'opacity-100' : 'opacity-0'}`}>
-                  🔇 Muted
-                </div>
-              )}
+              {/* Mute indicator removed for streaming sites - mute control is inconsistent and not functional for iframes */}
             </>
           )}
         </div>
       ) : videoType === 'generic' && url ? (
         // Try embedding generic URLs as iframes (might be streaming sites)
         <div className="relative w-full h-full">
-          {iframeBlocked ? (
+          {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
                 <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
@@ -934,12 +952,13 @@ export default function VideoPlayer({
                   </div>
                   <h3 className="text-white text-sm font-semibold mb-1 px-2">Embedding Restricted</h3>
                   <p className="text-zinc-400 text-xs leading-tight px-2">
-                    Site prevents embedded playback
+                    Site prevents embedded playback. Requests are made from your browser.
                   </p>
                 </div>
                 <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
                     onClick={() => {
+                      // Try proxy as fallback (may be blocked on Vercel)
                       setUseProxy(true);
                       setIframeBlocked(false);
                     }}
@@ -948,7 +967,20 @@ export default function VideoPlayer({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span>Try Proxy</span>
+                    <span>Try Proxy (May Fail)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Force direct loading - retry with direct iframe
+                      setIframeBlocked(false);
+                      setUseProxy(false);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Retry Direct</span>
                   </button>
                   <button
                     onClick={() => window.open(url, '_blank')}
@@ -957,7 +989,7 @@ export default function VideoPlayer({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    <span>New Tab</span>
+                    <span>Open in New Tab</span>
                   </button>
                 </div>
               </div>
@@ -990,11 +1022,7 @@ export default function VideoPlayer({
                   🌐 WEB PAGE
                 </div>
               )}
-              {showMutedIndicator && (
-                <div className={`absolute top-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity duration-300 ${showMutedIndicator ? 'opacity-100' : 'opacity-0'}`}>
-                  🔇 Muted
-                </div>
-              )}
+              {/* Mute indicator removed for generic iframes - mute control is inconsistent and not functional for iframes */}
             </>
           )}
         </div>
