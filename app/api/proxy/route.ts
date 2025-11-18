@@ -28,28 +28,77 @@ export async function GET(request: NextRequest) {
   try {
     const parsedTargetUrl = new URL(targetUrl);
 
-    // Fetch the target URL
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': parsedTargetUrl.origin,
-      },
-    });
+    // Create an AbortController for timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Failed to fetch: ${response.status} ${response.statusText}` },
-        { status: response.status }
-      );
-    }
+    try {
+      // Fetch the target URL with comprehensive browser-like headers
+      // This helps bypass bot detection that blocks server-side requests
+      // Note: Some sites block Vercel IPs regardless of headers
+      // Using Edge Runtime may help as it uses different IP ranges
+      const response = await fetch(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+          'Accept-Language': 'en-US,en;q=0.9',
+          // Note: Removed Accept-Encoding as Node.js fetch handles decompression automatically
+          'Accept-Charset': 'utf-8',
+          'Referer': parsedTargetUrl.origin + '/',
+          'Origin': parsedTargetUrl.origin,
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'same-origin',
+          'Sec-Fetch-User': '?1',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+        },
+        redirect: 'follow',
+        signal: controller.signal,
+        // Add credentials to potentially help with some sites
+        credentials: 'omit',
+      });
 
-    // Get the response body
-    let html = await response.text();
+      clearTimeout(timeoutId);
 
-    // Inject CSS and JavaScript for muting and hiding elements
-    const injectedCode = `
+      if (!response.ok) {
+        // Log additional details for debugging
+        const responseHeaders: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+          responseHeaders[key] = value;
+        });
+
+        console.error('Proxy fetch failed:', {
+          url: targetUrl,
+          status: response.status,
+          statusText: response.statusText,
+          headers: responseHeaders,
+        });
+
+        return NextResponse.json(
+          {
+            error: `Failed to fetch: ${response.status} ${response.statusText}`,
+            url: targetUrl,
+            // Include some response headers that might help debug
+            details: response.status === 403
+              ? 'The target site is blocking server-side requests. This is common with streaming sites that detect Vercel IP addresses.'
+              : undefined
+          },
+          { status: response.status }
+        );
+      }
+
+      // Get the response body
+      let html = await response.text();
+
+      // Inject CSS and JavaScript for muting and hiding elements
+      const injectedCode = `
       <script>
         // ===== POPUP BLOCKING CODE =====
         // Block all popups and new window attempts
@@ -353,61 +402,73 @@ export async function GET(request: NextRequest) {
           display: none !important;
         }
       </style>
-    `;
+      `;
 
-    const shouldInjectBase = !/<base\s/i.test(html);
-    const baseHref = buildBaseHref(parsedTargetUrl);
-    const combinedInjection = `${shouldInjectBase ? `<base href="${baseHref}">` : ''}${injectedCode}`;
+      const shouldInjectBase = !/<base\s/i.test(html);
+      const baseHref = buildBaseHref(parsedTargetUrl);
+      const combinedInjection = `${shouldInjectBase ? `<base href="${baseHref}">` : ''}${injectedCode}`;
 
-    // Inject the code at the very beginning - BEFORE any other scripts can run
-    if (html.includes('<head>')) {
-      // Inject immediately after opening <head> tag
-      html = html.replace('<head>', `<head>${combinedInjection}`);
-    } else if (html.includes('<html>')) {
-      // Inject immediately after opening <html> tag
-      html = html.replace('<html>', `<html>${combinedInjection}`);
-    } else if (html.includes('<head')) {
-      // Handle <head with attributes
-      html = html.replace(/<head([^>]*)>/, `<head$1>${combinedInjection}`);
-    } else {
-      // Last resort - prepend to entire HTML
-      html = combinedInjection + html;
+      // Inject the code at the very beginning - BEFORE any other scripts can run
+      if (html.includes('<head>')) {
+        // Inject immediately after opening <head> tag
+        html = html.replace('<head>', `<head>${combinedInjection}`);
+      } else if (html.includes('<html>')) {
+        // Inject immediately after opening <html> tag
+        html = html.replace('<html>', `<html>${combinedInjection}`);
+      } else if (html.includes('<head')) {
+        // Handle <head with attributes
+        html = html.replace(/<head([^>]*)>/, `<head$1>${combinedInjection}`);
+      } else {
+        // Last resort - prepend to entire HTML
+        html = combinedInjection + html;
+      }
+
+      // Create a new response with modified headers
+      const proxyResponse = new NextResponse(html);
+
+      // Copy content type
+      const contentType = response.headers.get('content-type');
+      if (contentType) {
+        proxyResponse.headers.set('Content-Type', contentType);
+      }
+
+      // Remove X-Frame-Options and CSP headers that prevent embedding
+      proxyResponse.headers.delete('X-Frame-Options');
+      proxyResponse.headers.delete('Content-Security-Policy');
+      proxyResponse.headers.delete('X-Content-Security-Policy');
+
+      // Add permissive CORS headers
+      proxyResponse.headers.set('Access-Control-Allow-Origin', '*');
+      proxyResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      proxyResponse.headers.set('Access-Control-Allow-Headers', '*');
+
+      // Add CSP to block popups at browser level while allowing video playback
+      proxyResponse.headers.set(
+        'Content-Security-Policy',
+        "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+        "script-src * 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src * 'unsafe-inline'; " +
+        "img-src * data: blob:; " +
+        "media-src * blob: data:; " +
+        "frame-src *; " +
+        "connect-src *; " +
+        "object-src 'none'; " +
+        "base-uri 'self';"
+      );
+
+      return proxyResponse;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      // Handle abort/timeout errors
+      if (fetchError.name === 'AbortError' || fetchError.message?.includes('aborted')) {
+        return NextResponse.json(
+          { error: 'Request timeout: The request took too long to complete' },
+          { status: 408 }
+        );
+      }
+      // Re-throw other errors to be handled by outer catch
+      throw fetchError;
     }
-
-    // Create a new response with modified headers
-    const proxyResponse = new NextResponse(html);
-
-    // Copy content type
-    const contentType = response.headers.get('content-type');
-    if (contentType) {
-      proxyResponse.headers.set('Content-Type', contentType);
-    }
-
-    // Remove X-Frame-Options and CSP headers that prevent embedding
-    proxyResponse.headers.delete('X-Frame-Options');
-    proxyResponse.headers.delete('Content-Security-Policy');
-    proxyResponse.headers.delete('X-Content-Security-Policy');
-
-    // Add permissive CORS headers
-    proxyResponse.headers.set('Access-Control-Allow-Origin', '*');
-    proxyResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    proxyResponse.headers.set('Access-Control-Allow-Headers', '*');
-
-    // Add CSP to block popups at browser level while allowing video playback
-    proxyResponse.headers.set(
-      'Content-Security-Policy',
-      "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-      "script-src * 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src * 'unsafe-inline'; " +
-      "img-src * data: blob:; " +
-      "media-src * blob: data:; " +
-      "frame-src *; " +
-      "connect-src *; " +
-      "object-src 'none'; " +
-      "base-uri 'self';"
-    );
-
-    return proxyResponse;
   } catch (error) {
     console.error('Proxy error:', error);
     return NextResponse.json(
@@ -427,4 +488,9 @@ export async function OPTIONS(request: NextRequest) {
     },
   });
 }
+
+// Use Edge Runtime - this may use different IP addresses than Node.js runtime
+// Edge Functions run on Vercel's edge network which might not be blocked
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
 
