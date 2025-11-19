@@ -6,6 +6,7 @@ interface VideoInputProps {
   onSetUrl: (quadrantIndex: number, url: string) => void;
   focusedIndex: number;
   videoSlots: { url: string; isExpanded: boolean }[];
+  slotOrder: number[];
   onToggleTopBar: () => void;
   layoutMode: 'grid' | 'expanded' | 'split';
   onToggleLayout: () => void;
@@ -22,6 +23,7 @@ export default function VideoInput({
   onSetUrl,
   focusedIndex,
   videoSlots,
+  slotOrder,
   onToggleTopBar,
   layoutMode,
   onToggleLayout,
@@ -78,23 +80,40 @@ export default function VideoInput({
   };
 
   const handleShare = async () => {
-    // Create URL with video links encoded
-    const params = new URLSearchParams();
+    // Build video URLs object (only include slots with URLs)
+    const videoUrls: { [key: string]: string } = {};
     videoSlots.forEach((slot, index) => {
       if (slot.url) {
-        params.set(`v${index}`, slot.url);
+        videoUrls[index.toString()] = slot.url;
       }
     });
-    
-    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-    
+
     try {
+      // Create short URL via backend API
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numSlots,
+          slotOrder,
+          videoUrls,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create share link');
+      }
+
+      const { id } = await response.json();
+      const shareUrl = `${window.location.origin}/s/${id}`;
+
       await navigator.clipboard.writeText(shareUrl);
       setShowCopied(true);
       setTimeout(() => setShowCopied(false), 2000);
     } catch (err) {
-      // Fallback: show the URL in a prompt
-      prompt('Copy this link to share:', shareUrl);
+      console.error('Share failed:', err);
+      // Fallback: show error
+      alert('Failed to create share link. Please try again.');
     }
   };
 

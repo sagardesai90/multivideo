@@ -13,13 +13,28 @@ interface VideoSlot {
 // Track the display order of slots (which slot appears in which position)
 // slotOrder[position] = slotIndex (e.g., slotOrder[0] = 2 means slot 2 is displayed in position 0)
 
+// Helper to normalize a slotOrder array to always have 9 elements
+function normalizeSlotOrder(order: number[]): number[] {
+  // Start with what we have (up to 9 elements)
+  const result = order.slice(0, 9);
+
+  // Find which indices 0-8 are missing
+  const present = new Set(result);
+  for (let i = 0; i < 9; i++) {
+    if (!present.has(i)) {
+      result.push(i);
+    }
+  }
+
+  return result.slice(0, 9);
+}
+
 export default function VideoGrid() {
-  const [videoSlots, setVideoSlots] = useState<VideoSlot[]>([
-    { url: '', isExpanded: false },
-    { url: '', isExpanded: false },
-    { url: '', isExpanded: false },
-    { url: '', isExpanded: false },
-  ]);
+  // Always maintain 9 slots - numSlots controls visibility, not array length
+  // This ensures we never lose data when changing grid size
+  const [videoSlots, setVideoSlots] = useState<VideoSlot[]>(
+    Array.from({ length: 9 }, () => ({ url: '', isExpanded: false }))
+  );
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
   const [audioFocusIndex, setAudioFocusIndex] = useState<number>(0);
   const [hideTopBar, setHideTopBar] = useState<boolean>(false);
@@ -89,24 +104,79 @@ export default function VideoGrid() {
 
     // Check URL parameters first (for shared links)
     const urlParams = new URLSearchParams(window.location.search);
-    const urlVideos: VideoSlot[] = [
-      { url: '', isExpanded: false },
-      { url: '', isExpanded: false },
-      { url: '', isExpanded: false },
-      { url: '', isExpanded: false },
-    ];
+
+    // Check for numSlots in URL params (support both 'n' and legacy 'numSlots')
+    const urlNumSlots = urlParams.get('n') || urlParams.get('numSlots');
+    let targetNumSlots = 4; // default
+    if (urlNumSlots) {
+      const parsed = parseInt(urlNumSlots, 10);
+      if (parsed >= 1 && parsed <= 9) {
+        targetNumSlots = parsed;
+        setNumSlots(parsed);
+      }
+    }
+
+    // Always create full 9-slot array to preserve data
+    const urlVideos: VideoSlot[] = Array.from({ length: 9 }, () => ({ url: '', isExpanded: false }));
 
     let hasUrlVideos = false;
-    for (let i = 0; i < 4; i++) {
-      const urlParam = urlParams.get(`v${i}`);
+    // Check all possible slots (0-8) for URL parameters
+    // Support both new format (just index: '0', '1') and legacy format ('v0', 'v1')
+    for (let i = 0; i < 9; i++) {
+      const urlParam = urlParams.get(i.toString()) || urlParams.get(`v${i}`);
       if (urlParam) {
         urlVideos[i].url = urlParam;
         hasUrlVideos = true;
+        // If we find a video at index i, ensure numSlots is at least i+1
+        if (i + 1 > targetNumSlots) {
+          targetNumSlots = i + 1;
+          setNumSlots(i + 1);
+        }
+      }
+    }
+
+    // Load slotOrder from URL if present (preserves rearrangements)
+    // Support both new compact format ('o'="312045678") and legacy JSON format ('slotOrder')
+    const urlSlotOrderCompact = urlParams.get('o');
+    const urlSlotOrderLegacy = urlParams.get('slotOrder');
+
+    if (urlSlotOrderCompact) {
+      // New compact format: "312045678" - each char is a digit 0-8
+      const parsed = urlSlotOrderCompact.split('').map(c => parseInt(c, 10));
+      if (parsed.length >= 1 && parsed.every(n => !isNaN(n) && n >= 0 && n <= 8)) {
+        const normalized = normalizeSlotOrder(parsed);
+        setSlotOrder(normalized);
+      }
+    } else if (urlSlotOrderLegacy) {
+      // Legacy JSON format: "[3,1,2,0,4,5,6,7,8]"
+      try {
+        const parsed = JSON.parse(urlSlotOrderLegacy);
+        if (Array.isArray(parsed) && parsed.length >= 1) {
+          const normalized = normalizeSlotOrder(parsed);
+          setSlotOrder(normalized);
+        }
+      } catch (e) {
+        console.error('Failed to parse slotOrder from URL:', e);
+      }
+    } else {
+      // Only load from localStorage if no URL params for slotOrder
+      const savedSlotOrder = localStorage.getItem('slotOrder');
+      if (savedSlotOrder) {
+        try {
+          const parsed = JSON.parse(savedSlotOrder);
+          if (Array.isArray(parsed) && parsed.length >= 1) {
+            // Normalize to 9 elements, filling missing indices
+            const normalized = normalizeSlotOrder(parsed);
+            setSlotOrder(normalized);
+          }
+        } catch (e) {
+          console.error('Failed to load saved slot order:', e);
+        }
       }
     }
 
     if (hasUrlVideos) {
-      // Use URL params if available
+      // Use URL params - always set full 9-slot array
       setVideoSlots(urlVideos);
     } else {
       // Fall back to localStorage
@@ -114,7 +184,13 @@ export default function VideoGrid() {
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setVideoSlots(parsed);
+          // Ensure we always have 9 slots
+          if (Array.isArray(parsed)) {
+            const fullSlots: VideoSlot[] = Array.from({ length: 9 }, (_, i) =>
+              parsed[i] || { url: '', isExpanded: false }
+            );
+            setVideoSlots(fullSlots);
+          }
         } catch (e) {
           console.error('Failed to load saved video slots:', e);
         }
@@ -146,20 +222,8 @@ export default function VideoGrid() {
     localStorage.setItem('slotOrder', JSON.stringify(slotOrder));
   }, [slotOrder]);
 
-  // Load slot order from localStorage on mount
-  useEffect(() => {
-    const savedSlotOrder = localStorage.getItem('slotOrder');
-    if (savedSlotOrder) {
-      try {
-        const parsed = JSON.parse(savedSlotOrder);
-        if (Array.isArray(parsed)) {
-          setSlotOrder(parsed);
-        }
-      } catch (e) {
-        console.error('Failed to load saved slot order:', e);
-      }
-    }
-  }, []);
+  // Note: slotOrder is now loaded in the main mount effect above (lines 121-144)
+  // This consolidates URL and localStorage loading to avoid race conditions
 
   // Save number of slots and single video mode
   useEffect(() => {
@@ -170,42 +234,14 @@ export default function VideoGrid() {
     localStorage.setItem('singleVideoMode', singleVideoMode.toString());
   }, [singleVideoMode]);
 
-  // Sync videoSlots array length with numSlots
+  // When numSlots changes, ensure focusedIndex is valid
+  // Note: slotOrder always has 9 elements, we don't need to sync it with numSlots
   useEffect(() => {
-    setVideoSlots((slots) => {
-      const newSlots = [...slots];
-      // Add slots if needed
-      while (newSlots.length < numSlots) {
-        newSlots.push({ url: '', isExpanded: false });
-      }
-      // Remove slots if needed (but keep URLs)
-      if (newSlots.length > numSlots) {
-        return newSlots.slice(0, numSlots);
-      }
-      return newSlots;
-    });
-    // Ensure focusedIndex is valid
+    // Ensure focusedIndex is valid for the visible slots
     if (focusedIndex >= numSlots) {
       setFocusedIndex(Math.max(0, numSlots - 1));
     }
-
-    // Keep slotOrder in sync with the current number of slots so that:
-    // - We never reference slot indexes that no longer exist after deletions
-    // - Every visible position maps to a valid slot index, avoiding "missing" slots
-    setSlotOrder((order) => {
-      // Remove any indices that are now out of range
-      let newOrder = order.filter((slotIndex) => slotIndex < numSlots);
-
-      // Ensure we have a mapping for every slot index [0, numSlots)
-      const requiredIndices = Array.from({ length: numSlots }, (_, i) => i);
-      const missing = requiredIndices.filter((i) => !newOrder.includes(i));
-
-      // Append any missing indices to the end to maintain relative order
-      newOrder = [...newOrder, ...missing];
-
-      return newOrder;
-    });
-  }, [numSlots]);
+  }, [numSlots, focusedIndex]);
 
   const handleAddSlot = () => {
     if (numSlots < 9) {
@@ -217,18 +253,9 @@ export default function VideoGrid() {
     if (numSlots > 1) {
       const newNumSlots = numSlots - 1;
       setNumSlots(newNumSlots);
-      // Clear the last slot's URL if it exists
-      setVideoSlots((slots) => {
-        const newSlots = [...slots];
-        if (newSlots.length > newNumSlots && newSlots[newNumSlots]?.url) {
-          newSlots[newNumSlots] = { ...newSlots[newNumSlots], url: '' };
-        }
-        return newSlots.slice(0, newNumSlots);
-      });
-      // Adjust focusedIndex if needed
-      if (focusedIndex >= newNumSlots) {
-        setFocusedIndex(Math.max(0, newNumSlots - 1));
-      }
+      // Note: We don't clear or truncate videoSlots - data is preserved
+      // The slot will just be hidden, but data remains for when it's shown again
+      // focusedIndex adjustment is handled by the numSlots effect
     }
   };
 
@@ -506,6 +533,7 @@ export default function VideoGrid() {
             onSetUrl={handleSetUrl}
             focusedIndex={focusedIndex}
             videoSlots={videoSlots}
+            slotOrder={slotOrder}
             onToggleTopBar={() => setHideTopBar(!hideTopBar)}
             layoutMode={layoutMode}
             onToggleLayout={() => {
