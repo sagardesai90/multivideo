@@ -83,6 +83,10 @@ export default function VideoGrid() {
   }, []);
 
   // Load from localStorage and URL params on mount
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // Load from localStorage and URL params on mount
+  // Load from localStorage and URL params on mount
   useEffect(() => {
     // Load number of slots and single video mode
     const savedNumSlots = localStorage.getItem('numSlots');
@@ -210,29 +214,66 @@ export default function VideoGrid() {
         console.error('Failed to load saved split positions:', e);
       }
     }
+
+    // Mark as loaded so we can start saving
+    setIsLoaded(true);
   }, []);
+
+  // Sync state to URL
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const params = new URLSearchParams();
+
+    // Set numSlots
+    params.set('n', numSlots.toString());
+
+    // Set slotOrder (compact format)
+    const orderStr = slotOrder.slice(0, 9).join('');
+    params.set('o', orderStr);
+
+    // Set video URLs
+    videoSlots.forEach((slot, index) => {
+      if (slot.url) {
+        params.set(index.toString(), slot.url);
+      }
+    });
+
+    // Update URL without reloading or adding to history
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, '', newUrl);
+
+  }, [numSlots, slotOrder, videoSlots, isLoaded]);
 
   // Save to localStorage whenever videoSlots changes
   useEffect(() => {
-    localStorage.setItem('videoSlots', JSON.stringify(videoSlots));
-  }, [videoSlots]);
+    if (isLoaded) {
+      localStorage.setItem('videoSlots', JSON.stringify(videoSlots));
+    }
+  }, [videoSlots, isLoaded]);
 
   // Save slot order to localStorage
   useEffect(() => {
-    localStorage.setItem('slotOrder', JSON.stringify(slotOrder));
-  }, [slotOrder]);
+    if (isLoaded) {
+      localStorage.setItem('slotOrder', JSON.stringify(slotOrder));
+    }
+  }, [slotOrder, isLoaded]);
 
   // Note: slotOrder is now loaded in the main mount effect above (lines 121-144)
   // This consolidates URL and localStorage loading to avoid race conditions
 
   // Save number of slots and single video mode
   useEffect(() => {
-    localStorage.setItem('numSlots', numSlots.toString());
-  }, [numSlots]);
+    if (isLoaded) {
+      localStorage.setItem('numSlots', numSlots.toString());
+    }
+  }, [numSlots, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('singleVideoMode', singleVideoMode.toString());
-  }, [singleVideoMode]);
+    if (isLoaded) {
+      localStorage.setItem('singleVideoMode', singleVideoMode.toString());
+    }
+  }, [singleVideoMode, isLoaded]);
 
   // When numSlots changes, ensure focusedIndex is valid
   // Note: slotOrder always has 9 elements, we don't need to sync it with numSlots
@@ -252,22 +293,34 @@ export default function VideoGrid() {
   const handleRemoveSlot = () => {
     if (numSlots > 1) {
       const newNumSlots = numSlots - 1;
+      // Get the slot index at the position being removed (the last visible position)
+      const slotIndexToRemove = slotOrder[newNumSlots];
+      
+      // Clear the slot data for the removed slot
+      setVideoSlots((slots) =>
+        slots.map((slot, i) =>
+          i === slotIndexToRemove ? { ...slot, url: '' } : slot
+        )
+      );
+      
+      // Update numSlots state (this will trigger localStorage save for numSlots)
       setNumSlots(newNumSlots);
-      // Note: We don't clear or truncate videoSlots - data is preserved
-      // The slot will just be hidden, but data remains for when it's shown again
       // focusedIndex adjustment is handled by the numSlots effect
+      // videoSlots update will trigger localStorage save via useEffect
     }
   };
 
   // Save split positions to localStorage
   useEffect(() => {
-    localStorage.setItem('splitPositions', JSON.stringify({
-      gridVerticalSplit,
-      gridHorizontalSplit,
-      expandedVerticalSplit,
-      splitHorizontalSplit,
-    }));
-  }, [gridVerticalSplit, gridHorizontalSplit, expandedVerticalSplit, splitHorizontalSplit]);
+    if (isLoaded) {
+      localStorage.setItem('splitPositions', JSON.stringify({
+        gridVerticalSplit,
+        gridHorizontalSplit,
+        expandedVerticalSplit,
+        splitHorizontalSplit,
+      }));
+    }
+  }, [gridVerticalSplit, gridHorizontalSplit, expandedVerticalSplit, splitHorizontalSplit, isLoaded]);
 
   // Handle ESC key to exit expand mode
   useEffect(() => {
@@ -645,14 +698,13 @@ export default function VideoGrid() {
           // We use slotOrder to determine CSS positioning
           const anyExpanded = videoSlots.some(s => s.isExpanded);
           const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
-          const slotsToRender = Array.from({ length: numSlots }, (_, i) => i);
+          // Iterate over visual positions (0 to numSlots-1)
+          const positionsToRender = Array.from({ length: numSlots }, (_, i) => i);
 
-          return slotsToRender.map((slotIndex) => {
-            if (slotIndex >= videoSlots.length) return null;
-
-            // Find which position this slot should appear in
-            const position = slotOrder.findIndex(si => si === slotIndex);
-            if (position === -1 || position >= numSlots) return null;
+          return positionsToRender.map((position) => {
+            // Get the slot index for this position
+            const slotIndex = slotOrder[position];
+            if (slotIndex === undefined || slotIndex >= videoSlots.length) return null;
 
             // Calculate visual position based on current layout mode and orientation
             // Use 'position' for layout calculations (where it appears on screen)
@@ -684,9 +736,9 @@ export default function VideoGrid() {
                 style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
               } else {
                 // Bottom videos - calculate position among non-focused slots
-                const otherSlots = slotsToRender.filter(si => si !== focusedIndex);
-                const bottomPos = otherSlots.indexOf(slotIndex);
-                const widthPercent = 100 / Math.max(1, otherSlots.length);
+                const otherPositions = positionsToRender.filter(p => slotOrder[p] !== focusedIndex);
+                const bottomPos = otherPositions.indexOf(position);
+                const widthPercent = 100 / Math.max(1, otherPositions.length);
                 style = {
                   ...style,
                   top: `${splitHorizontalSplit}%`,
@@ -703,9 +755,9 @@ export default function VideoGrid() {
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
               } else {
                 // Right stacked videos
-                const otherSlots = slotsToRender.filter(si => si !== expandedIndex);
-                const stackPos = otherSlots.indexOf(slotIndex);
-                const heightPercent = 100 / Math.max(1, otherSlots.length);
+                const otherPositions = positionsToRender.filter(p => slotOrder[p] !== expandedIndex);
+                const stackPos = otherPositions.indexOf(position);
+                const heightPercent = 100 / Math.max(1, otherPositions.length);
                 style = {
                   ...style,
                   top: `${stackPos * heightPercent}%`,
