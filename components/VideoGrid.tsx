@@ -295,14 +295,14 @@ export default function VideoGrid() {
       const newNumSlots = numSlots - 1;
       // Get the slot index at the position being removed (the last visible position)
       const slotIndexToRemove = slotOrder[newNumSlots];
-      
+
       // Clear the slot data for the removed slot
       setVideoSlots((slots) =>
         slots.map((slot, i) =>
           i === slotIndexToRemove ? { ...slot, url: '' } : slot
         )
       );
-      
+
       // Update numSlots state (this will trigger localStorage save for numSlots)
       setNumSlots(newNumSlots);
       // focusedIndex adjustment is handled by the numSlots effect
@@ -686,6 +686,7 @@ export default function VideoGrid() {
                     isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
                     onFocus={() => handleFocusSlot(index)}
                     onToggleExpand={() => handleToggleExpand(index)}
+                    onRemove={() => handleSetUrl(index, '')}
                   />
                 </div>
               );
@@ -859,6 +860,7 @@ export default function VideoGrid() {
                   isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
                   onFocus={() => handleFocusSlot(slotIndex)}
                   onToggleExpand={() => handleToggleExpand(slotIndex)}
+                  onRemove={() => handleSetUrl(slotIndex, '')}
                   isDraggedOver={dragOverPosition === position}
                   isDragging={draggedPosition === position}
                 />
