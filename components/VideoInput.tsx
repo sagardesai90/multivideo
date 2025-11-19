@@ -41,40 +41,46 @@ export default function VideoInput({
 
   // Update selected quadrant when focused index changes
   React.useEffect(() => {
-    if (focusedIndex < numSlots) {
-      setSelectedQuadrant(focusedIndex);
+    // Find the position of the focused slot
+    const position = slotOrder.findIndex(index => index === focusedIndex);
+    if (position !== -1 && position < numSlots) {
+      setSelectedQuadrant(position);
     }
-  }, [focusedIndex, numSlots]);
+  }, [focusedIndex, numSlots, slotOrder]);
 
   // Update input URL when selected quadrant changes
   React.useEffect(() => {
-    if (selectedQuadrant < videoSlots.length) {
-      const currentUrl = videoSlots[selectedQuadrant]?.url || '';
+    if (selectedQuadrant < numSlots) {
+      const slotIndex = slotOrder[selectedQuadrant];
+      const currentUrl = videoSlots[slotIndex]?.url || '';
       setInputUrl(currentUrl);
     }
-  }, [selectedQuadrant, videoSlots]);
+  }, [selectedQuadrant, videoSlots, slotOrder, numSlots]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputUrl.trim()) {
-      onSetUrl(selectedQuadrant, inputUrl.trim());
+      const slotIndex = slotOrder[selectedQuadrant];
+      onSetUrl(slotIndex, inputUrl.trim());
       // Input will be updated by the useEffect to show the loaded URL
     }
   };
 
   const handleClear = () => {
-    onSetUrl(selectedQuadrant, '');
+    const slotIndex = slotOrder[selectedQuadrant];
+    onSetUrl(slotIndex, '');
     // Input will be cleared by the useEffect when videoSlots updates
   };
 
   const handleRefresh = () => {
-    const currentUrl = videoSlots[selectedQuadrant]?.url;
+    const slotIndex = slotOrder[selectedQuadrant];
+    const currentUrl = videoSlots[slotIndex]?.url;
     if (currentUrl) {
       // Temporarily clear the URL, then restore it to force a reload
-      onSetUrl(selectedQuadrant, '');
+      onSetUrl(slotIndex, '');
       // Use setTimeout to ensure the clear happens first
       setTimeout(() => {
-        onSetUrl(selectedQuadrant, currentUrl);
+        onSetUrl(slotIndex, currentUrl);
       }, 50);
     }
   };
@@ -145,13 +151,12 @@ export default function VideoInput({
         <button
           type="button"
           onClick={onToggleLayout}
-          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${
-            layoutMode === 'split'
-              ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-              : layoutMode === 'expanded'
-                ? 'bg-purple-600 text-white ring-2 ring-purple-400'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
-          }`}
+          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${layoutMode === 'split'
+            ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+            : layoutMode === 'expanded'
+              ? 'bg-purple-600 text-white ring-2 ring-purple-400'
+              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+            }`}
           title={`Layout: ${layoutMode} (click to cycle)`}
         >
           {layoutMode === 'split' ? '📐' : layoutMode === 'expanded' ? '🔍' : '⊞'}
@@ -171,11 +176,10 @@ export default function VideoInput({
         <button
           type="button"
           onClick={onToggleSingleVideoMode}
-          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${
-            singleVideoMode
-              ? 'bg-green-600 text-white ring-2 ring-green-400'
-              : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
-          }`}
+          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${singleVideoMode
+            ? 'bg-green-600 text-white ring-2 ring-green-400'
+            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+            }`}
           title={singleVideoMode ? 'Single video mode (click to disable)' : 'Single video mode (click to enable)'}
         >
           🎬
@@ -205,25 +209,26 @@ export default function VideoInput({
 
         {/* Quadrant Selector */}
         <div className="flex gap-2 flex-shrink-0">
-          {Array.from({ length: numSlots }, (_, i) => i).map((index) => (
+          {Array.from({ length: numSlots }, (_, i) => i).map((position) => (
             <button
-              key={index}
+              key={position}
               type="button"
               onClick={() => {
-                setSelectedQuadrant(index);
+                setSelectedQuadrant(position);
                 // In single video mode, immediately switch the focused video
                 if (singleVideoMode && onFocusChange) {
-                  onFocusChange(index);
+                  // Find the slot index at this position
+                  const slotIndex = slotOrder[position];
+                  onFocusChange(slotIndex);
                 }
               }}
-              className={`w-10 h-10 rounded-lg font-semibold transition-all ${
-                selectedQuadrant === index
-                  ? 'bg-zinc-700 text-white ring-2 ring-zinc-600'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-              }`}
-              title={`Quadrant ${index + 1}`}
+              className={`w-10 h-10 rounded-lg font-semibold transition-all ${selectedQuadrant === position
+                ? 'bg-zinc-700 text-white ring-2 ring-zinc-600'
+                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                }`}
+              title={`Quadrant ${position + 1}`}
             >
-              {index + 1}
+              {position + 1}
             </button>
           ))}
         </div>
@@ -246,7 +251,7 @@ export default function VideoInput({
           Load
         </button>
 
-        {videoSlots[selectedQuadrant]?.url && (
+        {videoSlots[slotOrder[selectedQuadrant]]?.url && (
           <>
             <button
               type="button"
