@@ -9,6 +9,7 @@ interface VideoPlayerProps {
   isExpanded: boolean;
   onFocus: () => void;
   onToggleExpand: () => void;
+  onRemove?: () => void;
   isAudioEnabled?: boolean; // Only the focused video should have audio enabled
   isDraggedOver?: boolean; // Whether another slot is being dragged over this one
   isDragging?: boolean; // Whether this slot is currently being dragged
@@ -122,6 +123,7 @@ export default function VideoPlayer({
   isExpanded,
   onFocus,
   onToggleExpand,
+  onRemove,
   isAudioEnabled = true,
   isDraggedOver = false,
   isDragging = false,
@@ -616,7 +618,7 @@ export default function VideoPlayer({
         onTouchStart={handleInteraction}
       >
         {showHoverLabels && (
-          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {quadrantIndex + 1}
           </div>
         )}
@@ -663,7 +665,7 @@ export default function VideoPlayer({
           </div>
         )}
         {showHoverLabels && (
-          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {quadrantIndex + 1}
           </div>
         )}
@@ -711,7 +713,7 @@ export default function VideoPlayer({
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
           )}
@@ -764,7 +766,7 @@ export default function VideoPlayer({
             title={`Video player ${quadrantIndex + 1}`}
           />
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
           )}
@@ -790,7 +792,7 @@ export default function VideoPlayer({
           />
           {showHoverLabels && (
             <>
-              <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                 {quadrantIndex + 1}
               </div>
               <div className="absolute top-14 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
@@ -819,7 +821,7 @@ export default function VideoPlayer({
             }}
           />
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
           )}
@@ -834,7 +836,7 @@ export default function VideoPlayer({
           {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
               )}
@@ -915,7 +917,7 @@ export default function VideoPlayer({
                 title={`Streaming site ${quadrantIndex + 1}`}
               />
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
               )}
@@ -939,7 +941,7 @@ export default function VideoPlayer({
           {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
               )}
@@ -1008,7 +1010,7 @@ export default function VideoPlayer({
                 title={`Generic stream ${quadrantIndex + 1}`}
               />
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {quadrantIndex + 1}
                 </div>
               )}
@@ -1029,7 +1031,7 @@ export default function VideoPlayer({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {quadrantIndex + 1}
             </div>
           )}
@@ -1047,18 +1049,56 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Expand/Collapse Button - Shows on hover/interaction for a few seconds (hidden in portrait) */}
+      {/* Top Control Bar - Shows on hover/interaction (hidden in portrait) */}
       {showExpandButton && (
-        <button
-          className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-10 shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand();
-            handleInteraction(); // Reset timer on click
-          }}
-        >
-          {isExpanded ? '◱ Normal' : '⛶ Expand'}
-        </button>
+        <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none">
+          {/* Expand/Collapse Button - Top Left */}
+          <button
+            className="bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 shadow-lg pointer-events-auto flex items-center gap-1.5 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+              handleInteraction(); // Reset timer on click
+            }}
+            title={isExpanded ? "Minimize" : "Maximize"}
+          >
+            {isExpanded ? (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 0m-5 0l0 5M15 15l5 5m0 0l-5 0m5 0l0-5" />
+                </svg>
+                <span>Minimize</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M8 20H4m0 0v-4m0 4l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span>Expand</span>
+              </>
+            )}
+          </button>
+
+          {/* Delete Button - Top Right */}
+          {onRemove && (
+            <button
+              className="bg-red-600/80 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 shadow-lg pointer-events-auto flex items-center gap-1.5 backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm('Remove this video?')) {
+                  onRemove();
+                }
+                handleInteraction();
+              }}
+              title="Remove video"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Remove</span>
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
