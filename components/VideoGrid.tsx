@@ -10,23 +10,33 @@ interface VideoSlot {
   isExpanded: boolean;
 }
 
-// Track the display order of slots (which slot appears in which position)
-// slotOrder[position] = slotIndex (e.g., slotOrder[0] = 2 means slot 2 is displayed in position 0)
+// Slot order maps visual position to slot index
+// Initially identity mapping [0,1,2,3,4,5,6,7,8] - position = slot index
+// When dragging, we swap video data between slots (slot numbers stay fixed)
+// When deleting slots, we remove them from slotOrder without moving video data (prevents reloads)
 
-// Helper to normalize a slotOrder array to always have 9 elements
+// Helper to normalize a slotOrder array to always have 9 unique elements (0-8)
 function normalizeSlotOrder(order: number[]): number[] {
-  // Start with what we have (up to 9 elements)
-  const result = order.slice(0, 9);
-
+  // Remove duplicates while preserving order (keep first occurrence)
+  const seen = new Set<number>();
+  const unique: number[] = [];
+  
+  for (const item of order) {
+    if (!seen.has(item) && item >= 0 && item < 9) {
+      seen.add(item);
+      unique.push(item);
+    }
+  }
+  
   // Find which indices 0-8 are missing
-  const present = new Set(result);
   for (let i = 0; i < 9; i++) {
-    if (!present.has(i)) {
-      result.push(i);
+    if (!seen.has(i)) {
+      unique.push(i);
     }
   }
 
-  return result.slice(0, 9);
+  // Ensure we have exactly 9 elements
+  return unique.slice(0, 9);
 }
 
 export default function VideoGrid() {
@@ -46,7 +56,9 @@ export default function VideoGrid() {
   const inactivityTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Slot order - maps visual position to slot index
-  // This allows us to reorder visually without changing URL data (prevents stream reload)
+  // Initially identity mapping [0,1,2,3,4,5,6,7,8] - position = slot index
+  // When slots are deleted, we remove them from slotOrder without moving video data
+  // This prevents videos from reloading - they stay in their original slots
   const [slotOrder, setSlotOrder] = useState<number[]>([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 
   // Drag and drop state - using custom mouse-based approach for iframe compatibility
@@ -88,36 +100,39 @@ export default function VideoGrid() {
   // Load from localStorage and URL params on mount
   // Load from localStorage and URL params on mount
   useEffect(() => {
-    // Load number of slots and single video mode
-    const savedNumSlots = localStorage.getItem('numSlots');
-    if (savedNumSlots) {
-      try {
-        const parsed = parseInt(savedNumSlots, 10);
-        if (parsed >= 1 && parsed <= 9) {
-          setNumSlots(parsed);
-        }
-      } catch (e) {
-        console.error('Failed to load saved numSlots:', e);
-      }
-    }
-
-    const savedSingleVideoMode = localStorage.getItem('singleVideoMode');
-    if (savedSingleVideoMode === 'true') {
-      setSingleVideoMode(true);
-    }
-
-    // Check URL parameters first (for shared links)
+    // Check URL parameters first (for shared links) - URL takes precedence over localStorage
     const urlParams = new URLSearchParams(window.location.search);
 
     // Check for numSlots in URL params (support both 'n' and legacy 'numSlots')
     const urlNumSlots = urlParams.get('n') || urlParams.get('numSlots');
     let targetNumSlots = 4; // default
+    
+    // If URL has numSlots, use it (takes precedence)
     if (urlNumSlots) {
       const parsed = parseInt(urlNumSlots, 10);
       if (parsed >= 1 && parsed <= 9) {
         targetNumSlots = parsed;
         setNumSlots(parsed);
       }
+    } else {
+      // Only load from localStorage if no URL param
+      const savedNumSlots = localStorage.getItem('numSlots');
+      if (savedNumSlots) {
+        try {
+          const parsed = parseInt(savedNumSlots, 10);
+          if (parsed >= 1 && parsed <= 9) {
+            targetNumSlots = parsed;
+            setNumSlots(parsed);
+          }
+        } catch (e) {
+          console.error('Failed to load saved numSlots:', e);
+        }
+      }
+    }
+
+    const savedSingleVideoMode = localStorage.getItem('singleVideoMode');
+    if (savedSingleVideoMode === 'true') {
+      setSingleVideoMode(true);
     }
 
     // Always create full 9-slot array to preserve data
@@ -259,6 +274,56 @@ export default function VideoGrid() {
     }
   }, [slotOrder, isLoaded]);
 
+  // Validate and normalize slotOrder to ensure it's always valid
+  // This prevents issues where slotOrder might have duplicates or missing slots
+  // Use a ref to track the last validated slotOrder to prevent infinite loops
+  const lastValidatedSlotOrderRef = React.useRef<string>('');
+  
+  useEffect(() => {
+    if (!isLoaded) return;
+    
+    // Create a string representation to compare (avoids reference equality issues)
+    const slotOrderKey = JSON.stringify(slotOrder);
+    
+    // Skip if we already validated this exact slotOrder
+    if (lastValidatedSlotOrderRef.current === slotOrderKey) {
+      return;
+    }
+    
+    // Check if slotOrder is valid (has 9 elements, all unique, all 0-8)
+    const hasCorrectLength = slotOrder.length === 9;
+    const hasUniqueValues = new Set(slotOrder).size === 9;
+    const hasValidIndices = slotOrder.every(idx => idx >= 0 && idx < 9);
+    
+    // Also check if the visible range (first numSlots) has duplicates
+    const visibleRange = slotOrder.slice(0, numSlots);
+    const hasUniqueVisibleValues = new Set(visibleRange).size === visibleRange.length;
+    
+    if (!hasCorrectLength || !hasUniqueValues || !hasValidIndices || !hasUniqueVisibleValues) {
+      console.warn('slotOrder is invalid, normalizing:', {
+        slotOrder,
+        length: slotOrder.length,
+        uniqueCount: new Set(slotOrder).size,
+        hasValidIndices,
+        visibleRange,
+        visibleUniqueCount: new Set(visibleRange).size,
+        numSlots
+      });
+      const normalized = normalizeSlotOrder(slotOrder);
+      
+      // Only update if the normalized version is actually different
+      const normalizedKey = JSON.stringify(normalized);
+      if (normalizedKey !== slotOrderKey) {
+        lastValidatedSlotOrderRef.current = normalizedKey;
+        setSlotOrder(normalized);
+        return;
+      }
+    }
+    
+    // Mark this slotOrder as validated
+    lastValidatedSlotOrderRef.current = slotOrderKey;
+  }, [slotOrder, isLoaded, numSlots]);
+
   // Note: slotOrder is now loaded in the main mount effect above (lines 121-144)
   // This consolidates URL and localStorage loading to avoid race conditions
 
@@ -286,27 +351,161 @@ export default function VideoGrid() {
 
   const handleAddSlot = () => {
     if (numSlots < 9) {
-      setNumSlots(numSlots + 1);
+      const newNumSlots = numSlots + 1;
+      setNumSlots(newNumSlots);
+      
+      // Ensure slotOrder has enough visible slots
+      // If we're adding a slot, make sure slotOrder includes slots 0 through newNumSlots-1
+      setSlotOrder((order) => {
+        const visibleSlots = order.slice(0, numSlots);
+        const hiddenSlots = order.slice(numSlots);
+        
+        // Check if we need to add the next slot to visible positions
+        // Find which slot index should be at position numSlots
+        const allSlots = new Set(order);
+        let nextSlotIndex = -1;
+        
+        // Find the first slot index (0-8) that's not in the visible positions
+        for (let i = 0; i < 9; i++) {
+          if (!visibleSlots.includes(i)) {
+            nextSlotIndex = i;
+            break;
+          }
+        }
+        
+        // If we found a slot to add, insert it; otherwise use the next sequential index
+        if (nextSlotIndex === -1) {
+          nextSlotIndex = numSlots; // Use sequential index if all are already visible
+        }
+        
+        // Create new order with the added slot
+        const newOrder = [...visibleSlots, nextSlotIndex, ...hiddenSlots.filter(s => s !== nextSlotIndex)];
+        
+        // Ensure we have exactly 9 elements
+        while (newOrder.length < 9) {
+          // Find missing slot indices
+          const present = new Set(newOrder);
+          for (let i = 0; i < 9; i++) {
+            if (!present.has(i)) {
+              newOrder.push(i);
+              break;
+            }
+          }
+        }
+        
+        return newOrder.slice(0, 9);
+      });
     }
   };
 
   const handleRemoveSlot = () => {
     if (numSlots > 1) {
       const newNumSlots = numSlots - 1;
-      // Get the slot index at the position being removed (the last visible position)
+      // Get the slot index at the last visible position
       const slotIndexToRemove = slotOrder[newNumSlots];
-
-      // Clear the slot data for the removed slot
+      
+      // Clear the slot data for the removed slot (but keep it in its original position)
+      // This prevents videos from reloading - they stay in their original slots
       setVideoSlots((slots) =>
         slots.map((slot, i) =>
           i === slotIndexToRemove ? { ...slot, url: '' } : slot
         )
       );
-
+      
+      // Remove the slot from slotOrder without reordering video data
+      // This prevents videos from reloading - they stay in their original slots
+      setSlotOrder((order) => {
+        const newOrder = [...order];
+        // Remove the slot at position newNumSlots
+        newOrder.splice(newNumSlots, 1);
+        // Append it to the end to maintain 9 elements
+        newOrder.push(slotIndexToRemove);
+        return newOrder;
+      });
+      
       // Update numSlots state (this will trigger localStorage save for numSlots)
       setNumSlots(newNumSlots);
       // focusedIndex adjustment is handled by the numSlots effect
       // videoSlots update will trigger localStorage save via useEffect
+    }
+  };
+
+  const handleRemoveAnySlot = (slotIndex: number) => {
+    // Validate slot index
+    if (slotIndex < 0 || slotIndex >= 9) {
+      return;
+    }
+
+    // If slot has a URL, just clear it (don't remove the slot from the grid)
+    if (videoSlots[slotIndex]?.url) {
+      handleSetUrl(slotIndex, '');
+      return;
+    }
+
+    // If slot is empty and we have more than 1 slot, remove it from the grid
+    // Find the visual position of this slot in slotOrder
+    const position = slotOrder.findIndex(idx => idx === slotIndex);
+    
+    // Validate: slot must exist in slotOrder and be currently visible
+    if (position === -1) {
+      return; // Slot not found in slotOrder (shouldn't happen, but be safe)
+    }
+    
+    if (position >= numSlots) {
+      return; // Slot is already hidden (not visible)
+    }
+
+    // Can't remove if we only have 1 slot
+    if (numSlots <= 1) {
+      return;
+    }
+
+    // Remove the slot: this will cause all slots after to shift up one position
+    // Example: slotOrder = [0,1,2,3,4,5,6,7] with numSlots=8, delete position 3 (slot 3)
+    // After: slotOrder = [0,1,2,4,5,6,7,3] with numSlots=7
+    // Result: Slots 4,5,6,7 now appear at positions 3,4,5,6 (automatically shifted up)
+    // Note: Video data stays in original slots (slot 4's video stays in slot 4, just moves to position 3)
+    const newNumSlots = numSlots - 1;
+    
+    // Update both slotOrder and numSlots
+    // React will batch these updates, so they happen together
+    setSlotOrder((order) => {
+      // Create a copy to avoid mutating the original
+      const newOrder = [...order];
+      
+      // Remove the slot at this position - this automatically shifts all slots after it up by one
+      // splice(position, 1) removes 1 element at position, shifting everything after left
+      newOrder.splice(position, 1);
+      
+      // Append the removed slot index to the end to maintain exactly 9 elements
+      // This keeps the slotOrder array at a fixed size of 9
+      newOrder.push(slotIndex);
+      
+      // Always normalize to ensure no duplicates and all slots 0-8 are present
+      // This prevents issues where duplicates might be introduced
+      const normalized = normalizeSlotOrder(newOrder);
+      
+      // Validate that the visible range has unique values
+      const visibleSlots = normalized.slice(0, newNumSlots);
+      const uniqueVisibleSlots = new Set(visibleSlots);
+      if (visibleSlots.length !== uniqueVisibleSlots.size) {
+        console.warn(`slotOrder still has duplicates in visible range after normalization:`, {
+          visibleSlots,
+          uniqueCount: uniqueVisibleSlots.size,
+          fullOrder: normalized
+        });
+        // This shouldn't happen if normalizeSlotOrder works correctly, but be safe
+      }
+      
+      return normalized;
+    });
+    
+    // Decrease numSlots to hide the removed slot
+    setNumSlots(newNumSlots);
+    
+    // Adjust focusedIndex if it's now out of bounds (handled by useEffect, but do it here too for immediate update)
+    if (focusedIndex >= newNumSlots) {
+      setFocusedIndex(Math.max(0, newNumSlots - 1));
     }
   };
 
@@ -408,14 +607,26 @@ export default function VideoGrid() {
   };
 
   const handleSetUrl = (quadrantIndex: number, url: string) => {
-    setVideoSlots((slots) =>
-      slots.map((slot, i) =>
-        i === quadrantIndex ? { ...slot, url } : slot
-      )
-    );
-    setFocusedIndex(quadrantIndex);
+    // Only update the specific slot to minimize re-renders
+    // Use functional update to ensure we're working with the latest state
+    setVideoSlots((slots) => {
+      // Only create a new array if the URL actually changed
+      const currentSlot = slots[quadrantIndex];
+      if (currentSlot.url === url) {
+        return slots; // No change, return same array reference
+      }
+      
+      // Create new array with only the changed slot updated
+      const newSlots = [...slots];
+      newSlots[quadrantIndex] = { ...currentSlot, url };
+      return newSlots;
+    });
+    
+    // Only update focusedIndex if it's actually changing
+    setFocusedIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+    
     if (url) {
-      setAudioFocusIndex(quadrantIndex);
+      setAudioFocusIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
     }
   };
 
@@ -480,27 +691,25 @@ export default function VideoGrid() {
       return;
     }
 
-    console.log(`[Swap] Swapping position ${sourcePosition} with position ${targetPosition}`);
-
-    // Swap the slot order - this changes which slot appears in which position
-    // WITHOUT changing the slot's URL data, so streams don't reload!
+    // Swap slotOrder to swap which slots appear in which positions
+    // This keeps slot numbers fixed (position-based) and prevents video reloads
+    // because videos stay in their original slots, just move visually
     setSlotOrder((order) => {
       const newOrder = [...order];
       const temp = newOrder[sourcePosition];
       newOrder[sourcePosition] = newOrder[targetPosition];
       newOrder[targetPosition] = temp;
+      console.log(`[Swap] Swapped slotOrder: position ${sourcePosition} <-> position ${targetPosition}`);
       console.log(`[Swap] New order: ${newOrder.slice(0, numSlots).join(', ')}`);
-      return newOrder;
+      
+      // Normalize to ensure no duplicates (shouldn't be needed after a swap, but be safe)
+      const normalized = normalizeSlotOrder(newOrder);
+      return normalized;
     });
 
-    // Update focused index to follow the dragged slot
-    const draggedSlotIndex = slotOrder[sourcePosition];
-    const targetSlotIndex = slotOrder[targetPosition];
-    if (focusedIndex === draggedSlotIndex) {
-      // The focused slot moved to a new position, update focusedIndex to the slot that's now there
-      // Actually, focusedIndex refers to slot index, not position, so we don't need to change it
-    }
-  }, [draggedPosition, numSlots, slotOrder, focusedIndex]);
+    // focusedIndex tracks slot index, not position, so it doesn't need to change
+    // when we swap positions in slotOrder
+  }, [draggedPosition, numSlots, focusedIndex, slotOrder]);
 
   // Global mouse up to cancel drag if released outside a slot
   React.useEffect(() => {
@@ -661,6 +870,10 @@ export default function VideoGrid() {
           if (singleVideoMode) {
             const index = focusedIndex;
             if (index < videoSlots.length) {
+              // Find the position of the focused slot in slotOrder
+              const position = slotOrder.findIndex(si => si === index);
+              const displayPosition = position !== -1 ? position : 0;
+              
               return (
                 <div
                   key={index}
@@ -681,12 +894,13 @@ export default function VideoGrid() {
                     key={`video-player-${index}`}
                     url={videoSlots[index].url}
                     quadrantIndex={index}
+                    position={displayPosition}
                     isFocused={true}
                     isExpanded={false}
                     isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
                     onFocus={() => handleFocusSlot(index)}
                     onToggleExpand={() => handleToggleExpand(index)}
-                    onRemove={() => handleSetUrl(index, '')}
+                    onRemove={() => handleRemoveAnySlot(index)}
                   />
                 </div>
               );
@@ -695,21 +909,31 @@ export default function VideoGrid() {
           }
 
           // Multi-video mode: render all slots
-          // Each slot always renders the same data (to prevent reloads)
-          // We use slotOrder to determine CSS positioning
+          // Render based on positions (0 to numSlots-1) to ensure we always show exactly numSlots slots
+          // This prevents missing slots when slotOrder has duplicates or gaps
           const anyExpanded = videoSlots.some(s => s.isExpanded);
           const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
-          // Iterate over visual positions (0 to numSlots-1)
-          const positionsToRender = Array.from({ length: numSlots }, (_, i) => i);
-
-          return positionsToRender.map((position) => {
-            // Get the slot index for this position
+          
+          // Render visible slots based on positions (0 to numSlots-1)
+          // This ensures we always render exactly numSlots slots, one per position
+          return Array.from({ length: numSlots }, (_, position) => {
+            // Get the slot index for this position from slotOrder
             const slotIndex = slotOrder[position];
-            if (slotIndex === undefined || slotIndex >= videoSlots.length) return null;
+            
+            // Safety check: ensure slotIndex is valid
+            if (slotIndex === undefined || slotIndex < 0 || slotIndex >= 9) {
+              console.warn(`Invalid slotIndex at position ${position}:`, slotIndex, 'slotOrder:', slotOrder);
+              // Return a placeholder to maintain layout
+              return (
+                <div
+                  key={`invalid-${position}`}
+                  style={{ display: 'none' }}
+                />
+              );
+            }
 
             // Calculate visual position based on current layout mode and orientation
-            // Use 'position' for layout calculations (where it appears on screen)
-            // Use 'slotIndex' for data access (which video slot's data to show)
+            // Position is used for both layout and data access (slot numbers stay fixed)
             let style: React.CSSProperties;
 
             if (isPortrait) {
@@ -737,9 +961,10 @@ export default function VideoGrid() {
                 style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
               } else {
                 // Bottom videos - calculate position among non-focused slots
-                const otherPositions = positionsToRender.filter(p => slotOrder[p] !== focusedIndex);
-                const bottomPos = otherPositions.indexOf(position);
-                const widthPercent = 100 / Math.max(1, otherPositions.length);
+                const bottomSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
+                  .filter(p => slotOrder[p] !== focusedIndex);
+                const bottomPos = bottomSlotPositions.indexOf(position);
+                const widthPercent = 100 / Math.max(1, bottomSlotPositions.length);
                 style = {
                   ...style,
                   top: `${splitHorizontalSplit}%`,
@@ -756,9 +981,10 @@ export default function VideoGrid() {
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
               } else {
                 // Right stacked videos
-                const otherPositions = positionsToRender.filter(p => slotOrder[p] !== expandedIndex);
-                const stackPos = otherPositions.indexOf(position);
-                const heightPercent = 100 / Math.max(1, otherPositions.length);
+                const rightSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
+                  .filter(p => slotOrder[p] !== expandedIndex);
+                const stackPos = rightSlotPositions.indexOf(position);
+                const heightPercent = 100 / Math.max(1, rightSlotPositions.length);
                 style = {
                   ...style,
                   top: `${stackPos * heightPercent}%`,
@@ -817,7 +1043,7 @@ export default function VideoGrid() {
                     e.stopPropagation();
                     handleMouseDown(position);
                   }}
-                  title="Drag to swap position"
+                  title="Drag to swap videos"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M3 9h4v4H3zM9.5 9h5v4h-5zM17 9h4v4h-4z" />
@@ -855,18 +1081,35 @@ export default function VideoGrid() {
                   key={`video-player-${slotIndex}`}
                   url={videoSlots[slotIndex].url}
                   quadrantIndex={slotIndex}
+                  position={position}
                   isFocused={focusedIndex === slotIndex}
                   isExpanded={videoSlots[slotIndex].isExpanded}
                   isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
                   onFocus={() => handleFocusSlot(slotIndex)}
                   onToggleExpand={() => handleToggleExpand(slotIndex)}
-                  onRemove={() => handleSetUrl(slotIndex, '')}
+                  onRemove={() => handleRemoveAnySlot(slotIndex)}
                   isDraggedOver={dragOverPosition === position}
                   isDragging={draggedPosition === position}
                 />
               </div>
             );
-          }).filter(Boolean);
+          }).concat(
+            // Also render hidden slots (positions >= numSlots) to maintain React key stability
+            // This prevents remounts when slots are added/removed
+            Array.from({ length: 9 - numSlots }, (_, i) => {
+              const position = numSlots + i;
+              const slotIndex = slotOrder[position];
+              if (slotIndex === undefined || slotIndex < 0 || slotIndex >= 9) {
+                return null;
+              }
+              return (
+                <div
+                  key={slotIndex}
+                  style={{ display: 'none' }}
+                />
+              );
+            }).filter(Boolean)
+          );
         })()}
 
         {/* Render splitters on top (only in landscape mode and not single video mode) */}
