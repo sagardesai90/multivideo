@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 interface VideoPlayerProps {
   url: string;
-  quadrantIndex: number;
+  quadrantIndex: number; // Slot index (for internal logic)
+  position: number; // Visual position (0-based) - used for display
   isFocused: boolean;
   isExpanded: boolean;
   onFocus: () => void;
   onToggleExpand: () => void;
+  onRemove?: () => void;
   isAudioEnabled?: boolean; // Only the focused video should have audio enabled
   isDraggedOver?: boolean; // Whether another slot is being dragged over this one
   isDragging?: boolean; // Whether this slot is currently being dragged
@@ -115,13 +117,15 @@ function getTwitchEmbedUrl(url: string, mute: boolean = false): string {
   return url;
 }
 
-export default function VideoPlayer({
+function VideoPlayerComponent({
   url,
   quadrantIndex,
+  position,
   isFocused,
   isExpanded,
   onFocus,
   onToggleExpand,
+  onRemove,
   isAudioEnabled = true,
   isDraggedOver = false,
   isDragging = false,
@@ -138,6 +142,8 @@ export default function VideoPlayer({
   const [isExtractingStream, setIsExtractingStream] = useState(false);
   const [extractedStream, setExtractedStream] = useState<{ url: string; type: 'iframe' | 'hls' } | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const confirmDeleteTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -276,6 +282,10 @@ export default function VideoPlayer({
         clearTimeout(mobileLabelTimerRef.current);
         mobileLabelTimerRef.current = null;
       }
+      if (confirmDeleteTimerRef.current) {
+        clearTimeout(confirmDeleteTimerRef.current);
+        confirmDeleteTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -285,6 +295,7 @@ export default function VideoPlayer({
       mobileLabelTimerRef.current = null;
     }
     setShowMobileLabels(false);
+    setConfirmDelete(false);
   }, [url]);
 
   const isSameOriginUrl = useCallback((target?: string | null) => {
@@ -564,7 +575,7 @@ export default function VideoPlayer({
     }
 
     // Show expand button on hover/interaction
-    if (isHovered && !error && url) {
+    if (isHovered) {
       setShowExpandButton(true);
 
       // Hide after 5 seconds
@@ -587,7 +598,7 @@ export default function VideoPlayer({
   // Also show expand button on touch/interaction (for mobile)
   const handleInteraction = useCallback(() => {
     triggerMobileLabels();
-    if (!isPortrait && !error && url) {
+    if (!isPortrait) {
       setShowExpandButton(true);
       // Clear existing timer
       if (expandButtonTimerRef.current) {
@@ -616,8 +627,8 @@ export default function VideoPlayer({
         onTouchStart={handleInteraction}
       >
         {showHoverLabels && (
-          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-            {quadrantIndex + 1}
+          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            {position + 1}
           </div>
         )}
         <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
@@ -663,16 +674,35 @@ export default function VideoPlayer({
           </div>
         )}
         {showHoverLabels && (
-          <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-            {quadrantIndex + 1}
+          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            {position + 1}
           </div>
         )}
         <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
           <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-zinc-500 text-base font-semibold">{quadrantIndex + 1}</span>
+            <span className="text-zinc-500 text-base font-semibold">{position + 1}</span>
           </div>
           <p className="text-zinc-400 text-xs">Empty slot</p>
         </div>
+
+        {/* Top Control Bar for Empty Slot */}
+        {showExpandButton && onRemove && (
+          <div className="absolute top-0 right-0 p-2 flex justify-end items-start z-20 pointer-events-none">
+            <button
+              className="bg-zinc-800/80 hover:bg-red-600 text-zinc-400 hover:text-white w-8 h-8 rounded-lg transition-all duration-200 shadow-lg pointer-events-auto flex items-center justify-center backdrop-blur-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+                handleInteraction();
+              }}
+              title="Remove slot"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -711,8 +741,8 @@ export default function VideoPlayer({
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-              {quadrantIndex + 1}
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {position + 1}
             </div>
           )}
           <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full overflow-y-auto">
@@ -750,7 +780,7 @@ export default function VideoPlayer({
       ) : videoType === 'youtube' || videoType === 'twitch' ? (
         <div className="relative w-full h-full" style={{ overflow: 'hidden', width: '100%', height: '100%' }}>
           <iframe
-            key={embedUrl} // Force re-render when URL changes (important for mute param)
+            key={`${quadrantIndex}-${url}`} // Stable key based on slot and URL, not mute param
             src={embedUrl}
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
@@ -761,11 +791,11 @@ export default function VideoPlayer({
               height: '100%',
               objectFit: 'cover',
             }}
-            title={`Video player ${quadrantIndex + 1}`}
+            title={`Video player ${position + 1}`}
           />
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-              {quadrantIndex + 1}
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {position + 1}
             </div>
           )}
           {showMutedIndicator && (
@@ -790,8 +820,8 @@ export default function VideoPlayer({
           />
           {showHoverLabels && (
             <>
-              <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-                {quadrantIndex + 1}
+              <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                {position + 1}
               </div>
               <div className="absolute top-14 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                 🔴 LIVE
@@ -819,8 +849,8 @@ export default function VideoPlayer({
             }}
           />
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-              {quadrantIndex + 1}
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {position + 1}
             </div>
           )}
           {showMutedIndicator && (
@@ -834,8 +864,8 @@ export default function VideoPlayer({
           {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-                  {quadrantIndex + 1}
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {position + 1}
                 </div>
               )}
               <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
@@ -912,11 +942,11 @@ export default function VideoPlayer({
                   ? { sandbox: sandboxAttributes }
                   : {})}
                 style={{ border: 'none', overflow: 'hidden' }}
-                title={`Streaming site ${quadrantIndex + 1}`}
+                title={`Streaming site ${position + 1}`}
               />
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-                  {quadrantIndex + 1}
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {position + 1}
                 </div>
               )}
               {showProxiedLabel && useProxy && (
@@ -939,8 +969,8 @@ export default function VideoPlayer({
           {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-                  {quadrantIndex + 1}
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {position + 1}
                 </div>
               )}
               <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center max-w-full">
@@ -1005,11 +1035,11 @@ export default function VideoPlayer({
                   ? { sandbox: sandboxAttributes }
                   : {})}
                 style={{ border: 'none', overflow: 'hidden' }}
-                title={`Generic stream ${quadrantIndex + 1}`}
+                title={`Generic stream ${position + 1}`}
               />
               {showHoverLabels && (
-                <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-                  {quadrantIndex + 1}
+                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                  {position + 1}
                 </div>
               )}
               {showProxiedLabel && useProxy && (
@@ -1029,8 +1059,8 @@ export default function VideoPlayer({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
-              {quadrantIndex + 1}
+            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              {position + 1}
             </div>
           )}
           <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
@@ -1047,20 +1077,80 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Expand/Collapse Button - Shows on hover/interaction for a few seconds (hidden in portrait) */}
+      {/* Top Control Bar - Shows on hover/interaction (hidden in portrait) */}
       {showExpandButton && (
-        <button
-          className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-10 shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand();
-            handleInteraction(); // Reset timer on click
-          }}
-        >
-          {isExpanded ? '◱ Normal' : '⛶ Expand'}
-        </button>
+        <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none">
+          {/* Expand/Collapse Button - Top Left */}
+          <button
+            className="bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 shadow-lg pointer-events-auto flex items-center gap-1.5 backdrop-blur-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand();
+              handleInteraction(); // Reset timer on click
+            }}
+            title={isExpanded ? "Minimize" : "Maximize"}
+          >
+            {isExpanded ? (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0l5 0m-5 0l0 5M15 15l5 5m0 0l-5 0m5 0l0-5" />
+                </svg>
+                <span>Minimize</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M8 20H4m0 0v-4m0 4l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span>Expand</span>
+              </>
+            )}
+          </button>
+
+          {/* Delete Button - Top Right */}
+          {onRemove && (
+            <button
+              className={`${confirmDelete ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white'} w-8 h-8 rounded-lg transition-all duration-200 shadow-lg pointer-events-auto flex items-center justify-center backdrop-blur-sm`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (confirmDelete) {
+                  onRemove();
+                  setConfirmDelete(false);
+                } else {
+                  setConfirmDelete(true);
+                  // Reset confirmation after 3 seconds
+                  if (confirmDeleteTimerRef.current) clearTimeout(confirmDeleteTimerRef.current);
+                  confirmDeleteTimerRef.current = setTimeout(() => setConfirmDelete(false), 3000);
+                }
+                handleInteraction();
+              }}
+              title={confirmDelete ? "Click again to confirm" : "Remove video"}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
 }
+
+// Memoize VideoPlayer to prevent unnecessary re-renders when only position changes
+// This is important for drag and drop - we want videos to stay mounted when slotOrder changes
+export default React.memo(VideoPlayerComponent, (prevProps, nextProps) => {
+  // Only re-render if URL, quadrantIndex, or other important props change
+  // Ignore position changes as they don't affect the video content
+  return (
+    prevProps.url === nextProps.url &&
+    prevProps.quadrantIndex === nextProps.quadrantIndex &&
+    prevProps.isFocused === nextProps.isFocused &&
+    prevProps.isExpanded === nextProps.isExpanded &&
+    prevProps.isAudioEnabled === nextProps.isAudioEnabled &&
+    prevProps.isDraggedOver === nextProps.isDraggedOver &&
+    prevProps.isDragging === nextProps.isDragging
+    // Note: We intentionally ignore position changes to prevent reloads during drag and drop
+  );
+});
 

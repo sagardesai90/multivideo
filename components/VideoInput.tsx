@@ -38,17 +38,25 @@ export default function VideoInput({
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
   const [showCopied, setShowCopied] = useState(false);
+  
+  // Use a ref to track the last position to prevent unnecessary updates
+  const lastPositionRef = React.useRef<number>(-1);
 
   // Update selected quadrant when focused index changes
+  // Find the position of the focused slot in slotOrder
   React.useEffect(() => {
-    // Find the position of the focused slot
     const position = slotOrder.findIndex(index => index === focusedIndex);
     if (position !== -1 && position < numSlots) {
-      setSelectedQuadrant(position);
+      // Only update if the position actually changed to prevent infinite loops
+      if (lastPositionRef.current !== position) {
+        lastPositionRef.current = position;
+        setSelectedQuadrant(position);
+      }
     }
   }, [focusedIndex, numSlots, slotOrder]);
 
   // Update input URL when selected quadrant changes
+  // Get the slot index from slotOrder for this position
   React.useEffect(() => {
     if (selectedQuadrant < numSlots) {
       const slotIndex = slotOrder[selectedQuadrant];
@@ -216,8 +224,8 @@ export default function VideoInput({
               onClick={() => {
                 setSelectedQuadrant(position);
                 // In single video mode, immediately switch the focused video
+                // Get the slot index from slotOrder for this position
                 if (singleVideoMode && onFocusChange) {
-                  // Find the slot index at this position
                   const slotIndex = slotOrder[position];
                   onFocusChange(slotIndex);
                 }
