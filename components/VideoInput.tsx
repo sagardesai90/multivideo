@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { encodeShareState } from '@/lib/urlCompression';
 
 interface VideoInputProps {
   onSetUrl: (quadrantIndex: number, url: string) => void;
@@ -103,23 +104,14 @@ export default function VideoInput({
     });
 
     try {
-      // Create short URL via backend API
-      const response = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          numSlots,
-          slotOrder,
-          videoUrls,
-        }),
+      // Encode share state directly in URL (client-side, no server needed)
+      const encoded = encodeShareState({
+        numSlots,
+        slotOrder,
+        videoUrls,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create share link');
-      }
-
-      const { id } = await response.json();
-      const shareUrl = `${window.location.origin}/s/${id}`;
+      const shareUrl = `${window.location.origin}/c/${encoded}`;
 
       await navigator.clipboard.writeText(shareUrl);
       setShowCopied(true);
