@@ -574,14 +574,10 @@ function VideoPlayerComponent({
       return;
     }
 
-    // Show expand button on hover/interaction
+    // Show expand button on hover - KEEP it shown while hovering
     if (isHovered) {
       setShowExpandButton(true);
-
-      // Hide after 5 seconds
-      expandButtonTimerRef.current = setTimeout(() => {
-        setShowExpandButton(false);
-      }, 5000);
+      // No timeout here - we want it to stay visible while hovering
     } else {
       // Hide immediately when not hovered
       setShowExpandButton(false);
