@@ -151,7 +151,7 @@ export default function VideoInput({
         <button
           type="button"
           onClick={onToggleLayout}
-          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 ${layoutMode === 'split'
+          className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center ${layoutMode === 'split'
             ? 'bg-blue-600 text-white ring-2 ring-blue-400'
             : layoutMode === 'expanded'
               ? 'bg-purple-600 text-white ring-2 ring-purple-400'
@@ -159,7 +159,49 @@ export default function VideoInput({
             }`}
           title={`Layout: ${layoutMode} (click to cycle)`}
         >
-          {layoutMode === 'split' ? '📐' : layoutMode === 'expanded' ? '🔍' : '⊞'}
+          {layoutMode === 'split' ? (
+            <svg
+              viewBox="0 0 24 24"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12h18M12 3v18" />
+              <path d="M3 21V3h18v18" />
+            </svg>
+          ) : layoutMode === 'expanded' ? (
+            <svg
+              viewBox="0 0 24 24"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Grid icon - 4 squares */}
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+          )}
         </button>
 
         {/* Reset Layout Button */}
