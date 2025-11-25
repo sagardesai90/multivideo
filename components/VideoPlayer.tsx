@@ -148,6 +148,13 @@ function VideoPlayerComponent({
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  
+  // Streameast server options state
+  const [streameastServers, setStreameastServers] = useState<Array<{ name: string; url: string }>>([]);
+  const [selectedStreameastServer, setSelectedStreameastServer] = useState<string | null>(null);
+  const [isFetchingStreameastServers, setIsFetchingStreameastServers] = useState(false);
+  const [showServerSelector, setShowServerSelector] = useState(false);
+  const [isSwitchingServer, setIsSwitchingServer] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -170,6 +177,12 @@ function VideoPlayerComponent({
     if (!url) return false;
     return url.toLowerCase().includes('crackstreams');
   }, [url]);
+  
+  const isStreameastUrl = useMemo(() => {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('streameast') || lowerUrl.includes('istreameast');
+  }, [url]);
   const sandboxAttributes = 'allow-same-origin allow-scripts allow-forms allow-presentation';
   const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
   const expandButtonTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -180,11 +193,17 @@ function VideoPlayerComponent({
     return `/api/proxy?url=${encodeURIComponent(targetUrl)}`;
   };
   const streamingBaseUrl = useMemo(() => {
-    if (videoType === 'streaming-site' && extractedStream?.url) {
-      return extractedStream.url;
+    if (videoType === 'streaming-site') {
+      // For Streameast, use selected server URL if available, otherwise use extracted/default
+      if (isStreameastUrl && selectedStreameastServer) {
+        return selectedStreameastServer;
+      }
+      if (extractedStream?.url) {
+        return extractedStream.url;
+      }
     }
     return url;
-  }, [url, videoType, extractedStream?.url]);
+  }, [url, videoType, extractedStream?.url, isStreameastUrl, selectedStreameastServer]);
   // Prefer direct iframe loading (client-side) so requests come from user's browser IP
   // Only use proxy if X-Frame-Options blocks direct embedding
   const streamingIframeSrc = useMemo(() => {
@@ -223,6 +242,7 @@ function VideoPlayerComponent({
     setIframeBlocked(false);
     setUseProxy(false); // Always start with direct loading (client-side)
     setShowProxiedLabel(false);
+    setShowServerSelector(false);
     // Clear proxied label timer
     if (proxiedLabelTimerRef.current) {
       clearTimeout(proxiedLabelTimerRef.current);
@@ -276,6 +296,23 @@ function VideoPlayerComponent({
     }, 3500);
   }, [isMobileDevice]);
 
+  // Close server selector when clicking outside
+  useEffect(() => {
+    if (!showServerSelector) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-server-selector]')) {
+        setShowServerSelector(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showServerSelector]);
+
   useEffect(() => {
     return () => {
       if (mobileLabelTimerRef.current) {
@@ -312,14 +349,22 @@ function VideoPlayerComponent({
     if (!streamingBaseUrl) return false;
     try {
       const hostname = new URL(streamingBaseUrl).hostname;
-      const allowlist = ['embednow.top', 'embednow.online', 'embedstream.tv'];
+      const allowlist = [
+        'embednow.top', 
+        'embednow.online', 
+        'embedstream.tv',
+        'embedsports.top', // Streameast embedding domain
+        'embedsports.online',
+        'embedstream.top',
+      ];
       return allowlist.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
     } catch {
       return false;
     }
   }, [streamingBaseUrl]);
 
-  // Check if iframe is blocked by X-Frame-Options (skip for trusted cross-origin hosts)
+  // Check if iframe is blocked by X-Frame-Options
+  // Use load event and dimensions check instead of contentDocument (which is null for cross-origin)
   useEffect(() => {
     const iframeTarget = videoType === 'streaming-site' ? streamingIframeSrc : url;
     const shouldCheck =
@@ -327,32 +372,90 @@ function VideoPlayerComponent({
       iframeTarget &&
       (isSameOriginUrl(iframeTarget) || !shouldSkipEmbeddingCheck);
 
-    if (!shouldCheck) {
+    if (!shouldCheck || useProxy) {
+      // If using proxy, assume it's not blocked (proxy removes X-Frame-Options)
       setIframeBlocked(false);
       return;
     }
 
     setIframeBlocked(false);
-    const timer = setTimeout(() => {
-      try {
-        if (iframeRef.current) {
-          const iframeDoc = iframeRef.current.contentDocument;
-          if (!iframeDoc || !iframeDoc.body || iframeDoc.body.innerHTML === '') {
+    let loadTimer: NodeJS.Timeout;
+    let blockedCheckTimer: NodeJS.Timeout;
+    let hasLoaded = false;
+
+    const handleIframeLoad = () => {
+      hasLoaded = true;
+      setIframeBlocked(false);
+      if (loadTimer) clearTimeout(loadTimer);
+      if (blockedCheckTimer) clearTimeout(blockedCheckTimer);
+    };
+
+    const checkIfBlocked = () => {
+      if (hasLoaded) return; // Already loaded, not blocked
+      
+      if (iframeRef.current) {
+        // Check if iframe has dimensions (indicates content loaded)
+        const rect = iframeRef.current.getBoundingClientRect();
+        const hasDimensions = rect.width > 0 && rect.height > 0;
+        
+        // For same-origin, check contentDocument
+        // For cross-origin, we rely on load event and dimensions
+        if (isSameOriginUrl(iframeTarget)) {
+          try {
+            const iframeDoc = iframeRef.current.contentDocument;
+            if (!iframeDoc || !iframeDoc.body || iframeDoc.body.innerHTML === '') {
+              setIframeBlocked(true);
+              return;
+            }
+          } catch (e) {
             setIframeBlocked(true);
+            return;
           }
         }
-      } catch (e) {
-        setIframeBlocked(true);
+        
+        // If we have dimensions or iframe loaded, it's not blocked
+        if (hasDimensions) {
+          setIframeBlocked(false);
+          return;
+        }
+        
+        // If no dimensions and no load event after delay, likely blocked
+        // But give it more time - some sites take longer to load
+        blockedCheckTimer = setTimeout(() => {
+          if (!hasLoaded && iframeRef.current) {
+            const finalRect = iframeRef.current.getBoundingClientRect();
+            if (finalRect.width === 0 && finalRect.height === 0) {
+              setIframeBlocked(true);
+            }
+          }
+        }, 5000); // Wait 5 seconds before assuming blocked
       }
-    }, 2000);
+    };
 
-    return () => clearTimeout(timer);
+    if (iframeRef.current) {
+      // Listen for load event
+      iframeRef.current.addEventListener('load', handleIframeLoad);
+      
+      // Initial check after short delay
+      loadTimer = setTimeout(() => {
+        checkIfBlocked();
+      }, 3000); // Give iframe 3 seconds to load before first check
+    }
+
+    return () => {
+      if (loadTimer) clearTimeout(loadTimer);
+      if (blockedCheckTimer) clearTimeout(blockedCheckTimer);
+      if (iframeRef.current) {
+        iframeRef.current.removeEventListener('load', handleIframeLoad);
+      }
+    };
   }, [
     url,
     videoType,
     quadrantIndex,
     streamingBaseUrl,
     streamingIframeSrc,
+    useProxy,
     isSameOriginUrl,
     shouldSkipEmbeddingCheck,
   ]);
@@ -408,6 +511,60 @@ function VideoPlayerComponent({
       controller.abort();
     };
   }, [url, isCrackstreamsUrl, videoType]);
+
+  // Fetch Streameast server options
+  useEffect(() => {
+    if (!url || !isStreameastUrl || videoType !== 'streaming-site') {
+      setStreameastServers([]);
+      setSelectedStreameastServer(null);
+      setIsFetchingStreameastServers(false);
+      return;
+    }
+
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const fetchServers = async () => {
+      setIsFetchingStreameastServers(true);
+      try {
+        const response = await fetch(`/api/extract/streameast?url=${encodeURIComponent(url)}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (cancelled) return;
+
+        if (response.ok && data?.servers && Array.isArray(data.servers) && data.servers.length > 0) {
+          setStreameastServers(data.servers);
+          // Set default server URL
+          if (data.defaultServerUrl) {
+            setSelectedStreameastServer(data.defaultServerUrl);
+            setExtractedStream({
+              url: data.defaultServerUrl,
+              type: 'iframe',
+            });
+          }
+        }
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return;
+        }
+        console.error('Failed to fetch Streameast servers:', err);
+      } finally {
+        if (!cancelled) {
+          setIsFetchingStreameastServers(false);
+        }
+      }
+    };
+
+    fetchServers();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [url, isStreameastUrl, videoType]);
 
   // Get embed URL based on video type - recalculate when isAudioEnabled changes
   const embedUrl = useMemo(() => {
@@ -879,7 +1036,7 @@ function VideoPlayerComponent({
                 <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
                     onClick={() => {
-                      // Try proxy as fallback (may be blocked on Vercel)
+                      // Try proxy as fallback - key change will force iframe remount
                       setUseProxy(true);
                       setIframeBlocked(false);
                     }}
@@ -888,7 +1045,7 @@ function VideoPlayerComponent({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span>Try Proxy (May Fail)</span>
+                    <span>Try Proxy</span>
                   </button>
                   <button
                     onClick={() => {
@@ -917,9 +1074,13 @@ function VideoPlayerComponent({
             </div>
           ) : (
             <>
-              {isExtractingStream && (
+              {(isExtractingStream || isFetchingStreameastServers || isSwitchingServer) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-sm font-semibold z-30">
-                  Fetching CrackStreams player...
+                  {isSwitchingServer 
+                    ? 'Switching server...' 
+                    : isFetchingStreameastServers 
+                      ? 'Fetching Streameast servers...' 
+                      : 'Fetching CrackStreams player...'}
                 </div>
               )}
               {extractionError && !isExtractingStream && (
@@ -929,6 +1090,11 @@ function VideoPlayerComponent({
               )}
               <iframe
                 ref={iframeRef}
+                // Key changes when server changes or proxy mode changes, forcing complete remount
+                // This ensures a clean iframe element, preventing browser navigation warnings
+                key={`${isStreameastUrl && selectedStreameastServer 
+                  ? `streameast-${selectedStreameastServer}` 
+                  : `streaming-${quadrantIndex}-${streamingIframeSrc || url}`}-${useProxy ? 'proxy' : 'direct'}`}
                 // Always prefer direct URL (client-side) - browser makes request from user's IP
                 // Only use proxy if explicitly enabled (as fallback for X-Frame-Options)
                 src={streamingIframeSrc || url}
@@ -939,6 +1105,19 @@ function VideoPlayerComponent({
                   : {})}
                 style={{ border: 'none', overflow: 'hidden' }}
                 title={`Streaming site ${position + 1}`}
+                // Prevent navigation events from bubbling up
+                onLoad={(e) => {
+                  e.stopPropagation();
+                  // Reset iframe blocked check when iframe loads
+                  setIframeBlocked(false);
+                  setIsSwitchingServer(false);
+                }}
+                onError={(e) => {
+                  e.stopPropagation();
+                  // If proxy fails to load, log but don't show error immediately
+                  // User can see the iframe not loading and try direct again
+                  console.warn('Iframe failed to load', useProxy ? '(using proxy)' : '(direct)');
+                }}
               />
               {showHoverLabels && (
                 <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
@@ -953,6 +1132,89 @@ function VideoPlayerComponent({
               {showHoverLabels && !useProxy && (
                 <div className="absolute top-14 left-4 bg-purple-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
                   🌐 STREAMING SITE
+                </div>
+              )}
+              
+              {/* Streameast Server Selector - Bottom Right */}
+              {isStreameastUrl && streameastServers.length > 1 && (
+                <div 
+                  data-server-selector
+                  className={`absolute bottom-4 right-4 z-30 transition-opacity duration-200 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  {showServerSelector ? (
+                    <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[200px] pointer-events-auto">
+                      <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
+                        <span className="text-white text-xs font-semibold">Select Server</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowServerSelector(false);
+                          }}
+                          className="text-zinc-400 hover:text-white transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="max-h-[200px] overflow-y-auto">
+                        {streameastServers.map((server, index) => (
+                          <button
+                            key={index}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              
+                              // Prevent any navigation warnings by using a clean remount approach
+                              setIsSwitchingServer(true);
+                              
+                              // Update server selection - React key change will force iframe remount
+                              setSelectedStreameastServer(server.url);
+                              setExtractedStream({
+                                url: server.url,
+                                type: 'iframe',
+                              });
+                              setShowServerSelector(false);
+                              
+                              // Reset iframe blocked state when switching servers
+                              setIframeBlocked(false);
+                              setUseProxy(false);
+                              
+                              // Clear switching state after a brief moment to allow iframe to start loading
+                              setTimeout(() => {
+                                setIsSwitchingServer(false);
+                              }, 500);
+                            }}
+                            className={`w-full px-3 py-2 text-left text-xs transition-colors ${
+                              selectedStreameastServer === server.url
+                                ? 'bg-blue-600 text-white'
+                                : 'text-zinc-300 hover:bg-zinc-800'
+                            }`}
+                          >
+                            {server.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowServerSelector(true);
+                      }}
+                      className="bg-black/80 hover:bg-black/90 text-white px-3 py-1.5 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-2 pointer-events-auto"
+                      title="Switch server"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                      </svg>
+                      <span>
+                        {selectedStreameastServer
+                          ? streameastServers.find(s => s.url === selectedStreameastServer)?.name || 'Server'
+                          : `Servers (${streameastServers.length})`}
+                      </span>
+                    </button>
+                  )}
                 </div>
               )}
               {/* Mute indicator removed for streaming sites - mute control is inconsistent and not functional for iframes */}
