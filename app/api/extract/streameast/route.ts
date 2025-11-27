@@ -27,6 +27,47 @@ function ensureAbsoluteUrl(candidate: string, base: URL): string | null {
   }
 }
 
+/**
+ * Try to extract direct m3u8 URL from the HTML
+ * This is the best option as it bypasses all iframe restrictions
+ */
+function extractM3U8Url(html: string, baseUrl: URL): string | null {
+  const m3u8Patterns = [
+    // Direct m3u8 URLs in source/file/url properties
+    /(?:source|file|url)["'\s:]+["']([^"']+\.m3u8[^"']*)["']/gi,
+    // m3u8 URLs in data attributes
+    /data-[a-z-]*(?:src|url|stream|file)=["']([^"']+\.m3u8[^"']*)["']/gi,
+    // Direct m3u8 URLs anywhere in the HTML
+    /(https?:\/\/[^\s"'<>]+\.m3u8[^\s"'<>]*)/gi,
+    // JWPlayer source configurations
+    /jwplayer[^{]*\{[^}]*file\s*:\s*["']([^"']+\.m3u8[^"']*)["']/gi,
+    // Video.js source configurations
+    /sources\s*:\s*\[\s*\{\s*src\s*:\s*["']([^"']+\.m3u8[^"']*)["']/gi,
+  ];
+
+  for (const pattern of m3u8Patterns) {
+    let match;
+    const regex = new RegExp(pattern.source, pattern.flags);
+    while ((match = regex.exec(html)) !== null) {
+      const url = match[1];
+      // Validate it's a proper URL
+      try {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          // Make sure it's actually an m3u8 URL
+          if (url.includes('.m3u8')) {
+            console.log('[STREAMEAST] Found m3u8 URL:', url);
+            return url;
+          }
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  return null;
+}
+
 function extractServerOptions(html: string, baseUrl: URL): ServerOption[] {
   const servers: ServerOption[] = [];
   
