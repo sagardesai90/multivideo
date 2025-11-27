@@ -1184,18 +1184,21 @@ function VideoPlayerComponent({
                       : 'Fetching CrackStreams player...'}
                 </div>
               )}
-              {extractionError && !isExtractingStream && (
+              {/* Only show extraction errors if stream is not playing */}
+              {extractionError && !isExtractingStream && !hasUserMadeChoice && (
                 <div className="absolute bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none z-30 shadow-lg">
                   ⚠️ {extractionError}
                 </div>
               )}
-              {streameastExtractionError && !isFetchingStreameastServers && isStreameastUrl && (
+              {/* Only show Streameast extraction errors if no choice has been made yet */}
+              {streameastExtractionError && !isFetchingStreameastServers && isStreameastUrl && !hasUserMadeChoice && !extractedStream && (
                 <div className="absolute bottom-4 left-4 bg-orange-600 text-white px-3 py-1.5 rounded text-xs font-semibold z-30 shadow-lg max-w-[80%] pointer-events-auto">
                   <div className="flex items-center gap-2">
                     <span>⚠️ {streameastExtractionError}</span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        setHasUserMadeChoice(true);
                         setUseProxy(true);
                         setIframeBlocked(false);
                         setStreameastExtractionError(null);
