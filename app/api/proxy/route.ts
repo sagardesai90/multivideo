@@ -97,9 +97,215 @@ export async function GET(request: NextRequest) {
       // Get the response body
       let html = await response.text();
 
+      // Remove anti-iframe detection scripts
+      // Many streaming sites check if they're in an iframe and show errors
+      // We'll strip out common patterns that detect iframes
+      
+      // Remove scripts that check window.self !== window.top (iframe detection)
+      html = html.replace(
+        /<script[^>]*>[\s\S]*?(window\.self\s*!==?\s*window\.top|window\.top\s*!==?\s*window\.self|self\s*!==?\s*top|top\s*!==?\s*self)[\s\S]*?<\/script>/gi,
+        '<!-- iframe detection script removed -->'
+      );
+      
+      // Remove scripts that check window.frameElement
+      html = html.replace(
+        /<script[^>]*>[\s\S]*?window\.frameElement[\s\S]*?<\/script>/gi,
+        '<!-- frameElement check script removed -->'
+      );
+      
+      // Remove error banners and messages about sandbox or embedding
+      // These sites often have error messages baked into the HTML
+      html = html.replace(
+        /<div[^>]*>[\s\S]*?Remove sandbox attr[\s\S]*?<\/div>/gi,
+        '<!-- error banner removed -->'
+      );
+      html = html.replace(
+        /<h[1-6][^>]*>[\s\S]*?Remove sandbox[\s\S]*?<\/h[1-6]>/gi,
+        '<!-- error header removed -->'
+      );
+      html = html.replace(
+        /<p[^>]*>[\s\S]*?sandbox[\s\S]*?iframe[\s\S]*?<\/p>/gi,
+        '<!-- error paragraph removed -->'
+      );
+
+      // Rewrite relative URLs to absolute URLs pointing to the original domain
+      // This ensures scripts, stylesheets, and other resources load correctly
+      const origin = parsedTargetUrl.origin;
+      const baseHref = buildBaseHref(parsedTargetUrl);
+      
+      // Rewrite script src attributes (handles both single and double quotes)
+      html = html.replace(
+        /<script([^>]*)\ssrc=["'](\/[^"']+)["']/gi,
+        (match, attrs, path) => {
+          // Skip if already absolute URL
+          if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//')) {
+            return match;
+          }
+          return `<script${attrs} src="${origin}${path}"`;
+        }
+      );
+      
+      // Rewrite link href attributes for stylesheets and other resources
+      html = html.replace(
+        /<link([^>]*)\shref=["'](\/[^"']+)["']/gi,
+        (match, attrs, path) => {
+          // Skip if already absolute URL
+          if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//')) {
+            return match;
+          }
+          return `<link${attrs} href="${origin}${path}"`;
+        }
+      );
+      
+      // Rewrite img src attributes
+      html = html.replace(
+        /<img([^>]*)\ssrc=["'](\/[^"']+)["']/gi,
+        (match, attrs, path) => {
+          // Skip if already absolute URL
+          if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//')) {
+            return match;
+          }
+          return `<img${attrs} src="${origin}${path}"`;
+        }
+      );
+      
+      // Rewrite relative URLs in script content (for dynamically loaded scripts)
+      // This handles cases where JavaScript code constructs URLs
+      html = html.replace(
+        /(["'])(\/[^"']+\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot))(["'])/gi,
+        (match, quote1, path, ext, quote2) => {
+          // Skip if already absolute URL or if it's a data URL
+          if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('//') || path.startsWith('data:')) {
+            return match;
+          }
+          return `${quote1}${origin}${path}${quote2}`;
+        }
+      );
+
       // Inject CSS and JavaScript for muting and hiding elements
+      // Escape origin for use in JavaScript string
+      const escapedOrigin = origin.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
       const injectedCode = `
       <script>
+        // ===== ANTI-DETECTION CODE =====
+        // Override iframe detection methods before any other scripts run
+        (function() {
+          // Make the page think it's not in an iframe
+          try {
+            Object.defineProperty(window, 'frameElement', {
+              get: function() { return null; },
+              configurable: false
+            });
+          } catch (e) {}
+          
+          try {
+            Object.defineProperty(window, 'top', {
+              get: function() { return window.self; },
+              configurable: false
+            });
+          } catch (e) {}
+          
+          try {
+            Object.defineProperty(window, 'parent', {
+              get: function() { return window.self; },
+              configurable: false
+            });
+          } catch (e) {}
+          
+          // Override common iframe detection checks
+          window.isInIframe = function() { return false; };
+          window.inIframe = false;
+        })();
+        
+        // Remove error messages from DOM after page loads
+        document.addEventListener('DOMContentLoaded', function() {
+          // Remove any elements containing iframe/sandbox error messages
+          setTimeout(function() {
+            var errorTexts = ['Remove sandbox', 'sandbox attributes', 'iframe tag', 'embedding', 'not allowed'];
+            var allElements = document.querySelectorAll('*');
+            allElements.forEach(function(el) {
+              var text = el.textContent || '';
+              if (errorTexts.some(function(err) { return text.toLowerCase().includes(err.toLowerCase()); }) &&
+                  text.length < 500 && // Only small text blocks (error messages)
+                  getComputedStyle(el).display !== 'none') {
+                // Check if this looks like an error banner
+                var rect = el.getBoundingClientRect();
+                if (rect.width > 200 && rect.height < 300 && rect.top < 200) {
+                  console.log('[PROXY] Hiding error element:', el);
+                  el.style.display = 'none !important';
+                  el.remove();
+                }
+              }
+            });
+          }, 1000);
+        });
+        
+        // ===== URL REWRITING CODE =====
+        // Rewrite relative URLs to absolute URLs pointing to the original domain
+        (function() {
+          const originalDomain = '${escapedOrigin}';
+          
+          // Override document.createElement to rewrite script/link src/href
+          const originalCreateElement = document.createElement.bind(document);
+          document.createElement = function(tagName, options) {
+            const element = originalCreateElement(tagName, options);
+            
+            if (tagName.toLowerCase() === 'script' || tagName.toLowerCase() === 'link') {
+              const originalSetAttribute = element.setAttribute.bind(element);
+              element.setAttribute = function(name, value) {
+                if ((name === 'src' || name === 'href') && typeof value === 'string') {
+                  // Convert relative URLs to absolute
+                  if (value.startsWith('/') && !value.startsWith('//')) {
+                    value = originalDomain + value;
+                  }
+                }
+                return originalSetAttribute(name, value);
+              };
+            }
+            
+            return element;
+          };
+          
+          // Also intercept script/link elements added via innerHTML/outerHTML
+          const rewriteUrlsInString = function(htmlString) {
+            return htmlString.replace(
+              /(src|href)=["'](\\x2F[^"']+)["']/gi,
+              function(match, attr, path) {
+                if (path.startsWith('//')) return match; // Skip protocol-relative URLs
+                return attr + '="' + originalDomain + path + '"';
+              }
+            );
+          };
+          
+          // Override innerHTML/outerHTML setters
+          const overrideProperty = function(obj, prop) {
+            const descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+            if (!descriptor || !descriptor.set) return;
+            
+            const originalSetter = descriptor.set;
+            Object.defineProperty(obj, prop, {
+              set: function(value) {
+                if (typeof value === 'string') {
+                  value = rewriteUrlsInString(value);
+                }
+                originalSetter.call(this, value);
+              },
+              get: descriptor.get,
+              configurable: true,
+              enumerable: descriptor.enumerable
+            });
+          };
+          
+          // Override for common elements
+          ['HTMLScriptElement', 'HTMLLinkElement', 'HTMLImageElement'].forEach(function(className) {
+            const proto = window[className]?.prototype;
+            if (proto) {
+              overrideProperty(proto, 'innerHTML');
+              overrideProperty(proto, 'outerHTML');
+            }
+          });
+        })();
+        
         // ===== POPUP BLOCKING CODE =====
         // Block all popups and new window attempts
         (function() {
@@ -405,7 +611,6 @@ export async function GET(request: NextRequest) {
       `;
 
       const shouldInjectBase = !/<base\s/i.test(html);
-      const baseHref = buildBaseHref(parsedTargetUrl);
       const combinedInjection = `${shouldInjectBase ? `<base href="${baseHref}">` : ''}${injectedCode}`;
 
       // Inject the code at the very beginning - BEFORE any other scripts can run
@@ -443,17 +648,19 @@ export async function GET(request: NextRequest) {
       proxyResponse.headers.set('Access-Control-Allow-Headers', '*');
 
       // Add CSP to block popups at browser level while allowing video playback
+      // Allow blob: for workers, allow any base-uri for our injected base tag
       proxyResponse.headers.set(
         'Content-Security-Policy',
         "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
-        "script-src * 'unsafe-inline' 'unsafe-eval'; " +
+        "script-src * 'unsafe-inline' 'unsafe-eval' blob:; " +
         "style-src * 'unsafe-inline'; " +
         "img-src * data: blob:; " +
         "media-src * blob: data:; " +
         "frame-src *; " +
         "connect-src *; " +
+        "worker-src * blob:; " +
         "object-src 'none'; " +
-        "base-uri 'self';"
+        "base-uri *;"
       );
 
       return proxyResponse;
