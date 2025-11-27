@@ -1424,26 +1424,6 @@ function VideoPlayerComponent({
                   data-server-selector
                   className={`absolute bottom-4 right-4 z-30 transition-opacity duration-200 flex gap-2 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
                 >
-                  {/* Proxy Toggle Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setUseProxy(!useProxy);
-                      setIframeBlocked(false);
-                    }}
-                    className={`px-3 py-1.5 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-2 pointer-events-auto flex-shrink-0 whitespace-nowrap ${
-                      useProxy
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                        : 'bg-black/80 hover:bg-black/90 text-white'
-                    }`}
-                    title={useProxy ? 'Disable proxy (use direct connection)' : 'Enable proxy (bypass connection issues)'}
-                  >
-                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    <span className="whitespace-nowrap">{useProxy ? 'Proxy ON' : 'Proxy'}</span>
-                  </button>
-                  
                   {/* Server Selector - Only show if we have multiple servers */}
                   {streameastServers.length > 1 && (
                     showServerSelector ? (
