@@ -890,7 +890,7 @@ function VideoPlayerComponent({
         onTouchStart={handleInteraction}
       >
         {showHoverLabels && (
-          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+          <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {position + 1}
           </div>
         )}
@@ -937,7 +937,7 @@ function VideoPlayerComponent({
           </div>
         )}
         {showHoverLabels && (
-          <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+          <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
             {position + 1}
           </div>
         )}
@@ -1004,7 +1004,7 @@ function VideoPlayerComponent({
       {error ? (
         <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {position + 1}
             </div>
           )}
@@ -1057,7 +1057,7 @@ function VideoPlayerComponent({
             title={`Video player ${position + 1}`}
           />
           {showHoverLabels && (
-            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {position + 1}
             </div>
           )}
@@ -1083,7 +1083,7 @@ function VideoPlayerComponent({
           />
           {showHoverLabels && (
             <>
-              <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+              <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                 {position + 1}
               </div>
               <div className="absolute top-14 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none transition-opacity">
@@ -1112,7 +1112,7 @@ function VideoPlayerComponent({
             }}
           />
           {showHoverLabels && (
-            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {position + 1}
             </div>
           )}
@@ -1128,7 +1128,7 @@ function VideoPlayerComponent({
           {(!hasUserMadeChoice || iframeBlocked) && extractedStream?.type !== 'hls' ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden z-40">
               {showHoverLabels && (
-                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
                 </div>
               )}
@@ -1204,13 +1204,13 @@ function VideoPlayerComponent({
               )}
               {/* Only show extraction errors if stream is not playing */}
               {extractionError && !isExtractingStream && !hasUserMadeChoice && (
-                <div className="absolute bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none z-30 shadow-lg">
+                <div className="absolute bottom-16 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-semibold pointer-events-none z-30 shadow-lg">
                   ⚠️ {extractionError}
                 </div>
               )}
               {/* Only show Streameast extraction errors if no choice has been made yet */}
               {streameastExtractionError && !isFetchingStreameastServers && isStreameastUrl && !hasUserMadeChoice && !extractedStream && (
-                <div className="absolute bottom-4 left-4 bg-orange-600 text-white px-3 py-1.5 rounded text-xs font-semibold z-30 shadow-lg max-w-[80%] pointer-events-auto">
+                <div className="absolute bottom-16 left-4 bg-orange-600 text-white px-3 py-1.5 rounded text-xs font-semibold z-30 shadow-lg max-w-[80%] pointer-events-auto">
                   <div className="flex items-center gap-2">
                     <span>⚠️ {streameastExtractionError}</span>
                     <button
@@ -1295,7 +1295,7 @@ function VideoPlayerComponent({
                 }}
               />
               {showHoverLabels && (
-                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
                 </div>
               )}
@@ -1422,7 +1422,7 @@ function VideoPlayerComponent({
               {isStreameastUrl && (
                 <div 
                   data-server-selector
-                  className={`absolute bottom-4 right-4 z-30 transition-opacity duration-200 flex gap-2 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
+                  className={`absolute bottom-16 right-4 z-30 transition-opacity duration-200 flex gap-2 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
                 >
                   {/* Server Selector - Only show if we have multiple servers */}
                   {streameastServers.length > 1 && (
@@ -1512,7 +1512,7 @@ function VideoPlayerComponent({
           {iframeBlocked && !useProxy ? (
             <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
               {showHoverLabels && (
-                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
                 </div>
               )}
@@ -1579,7 +1579,7 @@ function VideoPlayerComponent({
                 title={`Generic stream ${position + 1}`}
               />
               {showHoverLabels && (
-                <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+                <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
                 </div>
               )}
@@ -1708,7 +1708,7 @@ function VideoPlayerComponent({
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 overflow-hidden">
           {showHoverLabels && (
-            <div className="absolute bottom-4 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
+            <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
               {position + 1}
             </div>
           )}
