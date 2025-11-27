@@ -441,13 +441,31 @@ function VideoPlayerComponent({
               // If we can access it and it's empty or has error content, mark as blocked
               if (iframeDoc && iframeDoc.body) {
                 const bodyText = iframeDoc.body.textContent || '';
-                if (bodyText.toLowerCase().includes('remove sandbox') || 
-                    bodyText.toLowerCase().includes('not allowed') ||
-                    bodyText.toLowerCase().includes('embedding') ||
-                    bodyText.toLowerCase().includes('iframe')) {
+                const bodyHTML = iframeDoc.body.innerHTML || '';
+                
+                // Only mark as blocked if we see SPECIFIC error messages AND no video player
+                const hasErrorMessage = (
+                  bodyText.toLowerCase().includes('remove sandbox attributes') || 
+                  bodyText.toLowerCase().includes('not allowed to be embedded') ||
+                  (bodyText.toLowerCase().includes('iframe') && bodyText.toLowerCase().includes('sandbox') && bodyText.length < 500)
+                );
+                
+                // Check if there's actually a video player present
+                const hasVideoPlayer = (
+                  bodyHTML.includes('<video') || 
+                  bodyHTML.includes('jwplayer') || 
+                  bodyHTML.includes('video-js') ||
+                  iframeDoc.querySelector('video') !== null
+                );
+                
+                // Only show error if we have error message AND no video player
+                if (hasErrorMessage && !hasVideoPlayer) {
                   console.warn('[PROXY] Detected error message in proxied content - showing overlay');
                   setIframeBlocked(true);
                   setHasUserMadeChoice(true); // Keep overlay in "error" mode
+                } else if (hasVideoPlayer) {
+                  console.log('[PROXY] Video player detected - proxy is working');
+                  setIframeBlocked(false);
                 }
               }
             } catch (e) {
