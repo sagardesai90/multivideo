@@ -776,9 +776,11 @@ function VideoPlayerComponent({
           console.log('[WAKE LOCK] Screen wake lock acquired');
           
           // Handle wake lock release (e.g., when user switches tabs)
-          wakeLock.addEventListener('release', () => {
-            console.log('[WAKE LOCK] Screen wake lock released');
-          });
+          if (wakeLock) {
+            wakeLock.addEventListener('release', () => {
+              console.log('[WAKE LOCK] Screen wake lock released');
+            });
+          }
         } catch (err) {
           console.warn('[WAKE LOCK] Failed to acquire wake lock:', err);
         }
