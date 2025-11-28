@@ -1423,11 +1423,12 @@ function VideoPlayerComponent({
                 <div 
                   data-server-selector
                   className={`absolute bottom-16 right-4 z-30 transition-opacity duration-200 flex gap-2 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
+                  style={showServerSelector ? { bottom: 'auto', top: '50%', transform: 'translateY(-50%)' } : {}}
                 >
                   {/* Server Selector - Only show if we have multiple servers */}
                   {streameastServers.length > 1 && (
                     showServerSelector ? (
-                      <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[200px] pointer-events-auto">
+                      <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[280px] pointer-events-auto">
                         <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
                           <span className="text-white text-xs font-semibold">Select Server</span>
                           <button
@@ -1442,7 +1443,7 @@ function VideoPlayerComponent({
                             </svg>
                           </button>
                         </div>
-                        <div className="max-h-[200px] overflow-y-auto">
+                        <div className="max-h-[40vh] overflow-y-auto">
                           {streameastServers.map((server, index) => (
                             <button
                               key={index}
