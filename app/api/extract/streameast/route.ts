@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(target.toString(), {
+    let response = await fetch(target.toString(), {
       headers: {
         'User-Agent': USER_AGENT,
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -122,9 +122,41 @@ export async function GET(request: NextRequest) {
       cache: 'no-store',
     });
 
+    // If blocked (403), try through Railway proxy if configured
+    if (!response.ok && response.status === 403) {
+      const fallbackProxyUrl = process.env.NEXT_PUBLIC_FALLBACK_PROXY_URL;
+      if (fallbackProxyUrl) {
+        console.log('[STREAMEAST EXTRACTION] Primary fetch blocked (403), trying Railway proxy...');
+        try {
+          // Fetch through Railway proxy
+          const proxyResponse = await fetch(
+            `${fallbackProxyUrl}/api/proxy?url=${encodeURIComponent(target.toString())}`,
+            {
+              headers: {
+                'User-Agent': USER_AGENT,
+              },
+              cache: 'no-store',
+            }
+          );
+          
+          if (proxyResponse.ok) {
+            console.log('[STREAMEAST EXTRACTION] Railway proxy successful!');
+            response = proxyResponse;
+          }
+        } catch (proxyErr) {
+          console.error('[STREAMEAST EXTRACTION] Railway proxy also failed:', proxyErr);
+        }
+      }
+    }
+
     if (!response.ok) {
       return NextResponse.json(
-        { error: `Failed to load Streameast page (${response.status})` },
+        { 
+          error: `Failed to load Streameast page (${response.status})`,
+          details: response.status === 403 
+            ? 'Streameast is blocking server requests. The site may work with direct connection from your browser.'
+            : undefined
+        },
         { status: response.status },
       );
     }
