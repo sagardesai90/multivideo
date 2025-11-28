@@ -328,13 +328,33 @@ export async function GET(request: NextRequest) {
             let target = e.target;
             let blocked = false;
             
+            // Allow clicks on actual video players and their controls
+            const isVideoControl = target.closest && target.closest('video, .jwplayer, [class*="jw-"], [class*="player-"], [id*="player"], button[aria-label*="play"], button[aria-label*="pause"], button[aria-label*="volume"]');
+            if (isVideoControl && !target.href) {
+              return; // Allow video control clicks
+            }
+            
             while (target && target !== document) {
+              const href = target.href || target.getAttribute && target.getAttribute('href') || '';
+              const onclick = target.onclick?.toString() || target.getAttribute && target.getAttribute('onclick') || '';
+              
+              // More aggressive popup detection
               if (target.target === '_blank' || 
-                  target.onclick?.toString().includes('window.open') ||
-                  target.href?.includes('javascript:') ||
-                  target.href?.includes('about:blank') ||
-                  target.getAttribute('onclick')?.includes('window.open') ||
-                  target.getAttribute('href')?.includes('javascript:')) {
+                  onclick.includes('window.open') ||
+                  onclick.includes('.open(') ||
+                  href.includes('javascript:') ||
+                  href.includes('about:blank') ||
+                  href.includes('void(0)') ||
+                  href.match(/^https?:\/\/[^\/]+\/?$/) || // Domain-only links (often popups)
+                  href.includes('pop') ||
+                  href.includes('/go/') ||
+                  href.includes('/track/') ||
+                  href.includes('/click/') ||
+                  href.includes('/redirect') ||
+                  target.className?.includes('ad') ||
+                  target.className?.includes('pop') ||
+                  target.id?.includes('ad-') ||
+                  target.id?.includes('pop')) {
                 blocked = true;
                 break;
               }
@@ -350,13 +370,16 @@ export async function GET(request: NextRequest) {
             }
           };
           
-          // Block on all mouse events that could trigger popups
+          // Block on all mouse and touch events that could trigger popups
           document.addEventListener('click', blockPopupEvent, true);
           document.addEventListener('mousedown', blockPopupEvent, true);
           document.addEventListener('mouseup', blockPopupEvent, true);
           document.addEventListener('auxclick', blockPopupEvent, true); // Middle click
           document.addEventListener('pointerdown', blockPopupEvent, true);
+          document.addEventListener('pointerup', blockPopupEvent, true);
           document.addEventListener('touchstart', blockPopupEvent, true);
+          document.addEventListener('touchend', blockPopupEvent, true); // Critical for mobile
+          document.addEventListener('contextmenu', blockPopupEvent, true);
           
           // Also block on the body when it loads
           window.addEventListener('load', function() {
@@ -368,14 +391,16 @@ export async function GET(request: NextRequest) {
           // Intercept addEventListener to detect and block popup-registering handlers
           const originalAddEventListener = EventTarget.prototype.addEventListener;
           EventTarget.prototype.addEventListener = function(type, listener, options) {
-            // Check if this is a click/mouse event with a popup handler
-            if ((type === 'click' || type === 'mousedown' || type === 'mouseup') && 
-                typeof listener === 'function') {
+            // Check if this is a click/mouse/touch event with a popup handler
+            const suspiciousEvents = ['click', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'pointerdown', 'pointerup'];
+            if (suspiciousEvents.includes(type) && typeof listener === 'function') {
               const listenerStr = listener.toString();
               if (listenerStr.includes('window.open') || 
                   listenerStr.includes('.open(') ||
                   listenerStr.includes('popup') ||
-                  listenerStr.includes('popunder')) {
+                  listenerStr.includes('popunder') ||
+                  listenerStr.includes('location.href') ||
+                  listenerStr.includes('window.location')) {
                 console.log('[POPUP BLOCKED] Prevented registration of popup handler for ' + type);
                 // Don't register the popup handler
                 return;
@@ -473,6 +498,42 @@ export async function GET(request: NextRequest) {
               e.stopPropagation();
             }
           }, true);
+          
+          // Aggressive overlay/popup removal - runs continuously
+          const removePopupOverlays = function() {
+            // Remove suspicious overlays and popups
+            const selectors = [
+              'div[style*="position: fixed"][style*="z-index"]',
+              'div[style*="position: absolute"][style*="z-index"]',
+              '[class*="popup"]', '[class*="pop-up"]', '[class*="modal"]',
+              '[id*="popup"]', '[id*="pop-up"]', '[id*="modal"]',
+              '[class*="overlay"]', '[id*="overlay"]',
+              'div[style*="z-index: 999"]', 'div[style*="z-index: 9999"]',
+              'div[style*="z-index:999"]', 'div[style*="z-index:9999"]'
+            ];
+            
+            selectors.forEach(function(selector) {
+              try {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(function(el) {
+                  // Don't remove video players
+                  if (el.querySelector && !el.querySelector('video, .jwplayer, [class*="jw-"]')) {
+                    // Check if it's actually a popup (covers most of screen)
+                    const rect = el.getBoundingClientRect();
+                    if (rect.width > window.innerWidth * 0.5 || rect.height > window.innerHeight * 0.5) {
+                      el.remove();
+                      console.log('[POPUP BLOCKED] Removed overlay element');
+                    }
+                  }
+                });
+              } catch (e) {}
+            });
+          };
+          
+          // Run overlay removal periodically
+          setInterval(removePopupOverlays, 500); // Check every 500ms
+          window.addEventListener('load', removePopupOverlays);
+          document.addEventListener('DOMContentLoaded', removePopupOverlays);
         })();
         
         // ===== VIDEO MUTING CODE =====
