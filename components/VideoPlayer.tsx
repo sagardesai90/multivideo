@@ -148,6 +148,8 @@ function VideoPlayerComponent({
   const hlsRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Streameast server options state
   const [streameastServers, setStreameastServers] = useState<Array<{ name: string; url: string }>>([]);
@@ -761,6 +763,85 @@ function VideoPlayerComponent({
     };
   }, [isAudioEnabled]);
 
+  // Prevent screen dimming/locking during video playback (iOS and other devices)
+  useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+    let activityTimer: NodeJS.Timeout | null = null;
+
+    const requestWakeLock = async () => {
+      // Try Screen Wake Lock API (modern browsers)
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+          console.log('[WAKE LOCK] Screen wake lock acquired');
+          
+          // Handle wake lock release (e.g., when user switches tabs)
+          if (wakeLock) {
+            wakeLock.addEventListener('release', () => {
+              console.log('[WAKE LOCK] Screen wake lock released');
+            });
+          }
+        } catch (err) {
+          console.warn('[WAKE LOCK] Failed to acquire wake lock:', err);
+        }
+      }
+    };
+
+    const simulateActivity = () => {
+      // Fallback: Simulate user activity to prevent screen lock
+      // This works on iOS and other devices that don't support wake lock API
+      try {
+        // Use video element's currentTime to reset activity timer
+        // This is a lightweight way to signal activity without affecting playback
+        if (videoRef.current && !videoRef.current.paused && videoRef.current.currentTime > 0) {
+          // Tiny seek operation that resets iOS activity timer
+          const currentTime = videoRef.current.currentTime;
+          // Only do this if video has been playing for a bit (avoid interfering with initial load)
+          if (currentTime > 1) {
+            // Micro-seek that's imperceptible to user but resets activity
+            videoRef.current.currentTime = currentTime - 0.0001;
+            setTimeout(() => {
+              if (videoRef.current && !videoRef.current.paused) {
+                videoRef.current.currentTime = currentTime;
+              }
+            }, 0);
+          }
+        }
+      } catch (err) {
+        // Silently fail if methods aren't available
+      }
+    };
+
+    const startActivitySimulation = () => {
+      // Simulate activity every 30 seconds (before typical 1-minute lock timeout)
+      activityTimer = setInterval(simulateActivity, 30000);
+    };
+
+    const stopActivitySimulation = () => {
+      if (activityTimer) {
+        clearInterval(activityTimer);
+        activityTimer = null;
+      }
+    };
+
+    // Only prevent screen lock if there's an active video playing
+    const hasActiveVideo = url && (videoType === 'hls' || videoType === 'video' || videoType === 'youtube' || videoType === 'twitch' || videoType === 'streaming-site');
+    
+    if (hasActiveVideo) {
+      requestWakeLock();
+      startActivitySimulation();
+    }
+
+    return () => {
+      // Cleanup
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+        wakeLock = null;
+      }
+      stopActivitySimulation();
+    };
+  }, [url, videoType]);
+
   // HLS Stream Support
   useEffect(() => {
     const loadHLS = async () => {
@@ -1073,6 +1154,8 @@ function VideoPlayerComponent({
             ref={videoRef}
             controls
             muted={!isAudioEnabled}
+            playsInline
+            {...({ 'webkit-playsinline': 'true' } as any)}
             className="w-full h-full"
             style={{
               objectFit: 'cover',
@@ -1104,6 +1187,8 @@ function VideoPlayerComponent({
             src={url}
             controls
             muted={!isAudioEnabled}
+            playsInline
+            {...({ 'webkit-playsinline': 'true' } as any)}
             className="w-full h-full"
             style={{
               objectFit: 'cover',
