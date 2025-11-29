@@ -55,7 +55,7 @@ All planned features have been successfully implemented according to the specifi
 ## File Structure
 
 ```
-multivideo/
+streamatrix.live/
 ├── app/
 │   ├── layout.tsx                 # Root layout with metadata
 │   ├── page.tsx                   # Main entry point (renders VideoGrid)

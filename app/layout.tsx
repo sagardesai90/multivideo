@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MultiVideo - Watch Multiple Streams",
+  title: "Streamatrix.live - Watch Multiple Streams",
   description: "Watch multiple video streams simultaneously in a 2x2 grid layout",
   viewport: {
     width: 'device-width',
