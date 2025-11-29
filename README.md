@@ -1,4 +1,4 @@
-# MultiVideo - Watch Multiple Streams Simultaneously
+# Streamatrix.live - Watch Multiple Streams Simultaneously
 
 A Next.js application that allows you to watch up to 4 video streams simultaneously in a 2x2 grid layout. Perfect for watching multiple sports games, live streams, or videos at the same time.
 
@@ -94,7 +94,7 @@ The app currently works best on desktop browsers. Future updates will include:
 ### Project Structure
 
 ```
-multivideo/
+streamatrix.live/
 ├── app/
 │   ├── layout.tsx          # Root layout with metadata
 │   ├── page.tsx             # Main page component

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate rich sample data for multivideo experiments."""
+"""Generate rich sample data for streamatrix.live experiments."""
 import json
 import random
 from datetime import datetime, timedelta

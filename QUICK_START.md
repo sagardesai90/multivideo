@@ -5,7 +5,7 @@
 ### 1. The app is already set up! Just run:
 
 ```bash
-cd /Users/sagardesai/Files/Documents/Personal/Repos/multivideo
+cd /Users/sagardesai/Files/Documents/Personal/Repos/streamatrix.live
 npm run dev
 ```
 

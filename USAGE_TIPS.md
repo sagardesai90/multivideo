@@ -9,7 +9,7 @@ For sports streaming sites like StreamEast:
 1. Navigate to the stream you want to watch on the streaming site
 2. Look for the direct video URL (often ends in .m3u8 for HLS streams)
 3. Copy the video URL
-4. Paste it into the MultiVideo app
+4. Paste it into the Streamatrix.live app
 5. Repeat for up to 4 different games
 
 **Note**: Some streaming sites may have protections that prevent embedding. In those cases, you may need to use the site's direct video URL or find an alternative stream.
@@ -100,7 +100,7 @@ Since all 4 videos play audio simultaneously:
 3. Filter by "m3u8"
 4. Play the video on the streaming site
 5. Look for .m3u8 URLs in the network requests
-6. Copy the full URL and paste it into MultiVideo
+6. Copy the full URL and paste it into Streamatrix.live
 
 **Warning**: Ensure you have the right to access and view the streams you're watching.
 
