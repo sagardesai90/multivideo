@@ -1,10 +1,21 @@
 # Streamatrix.live - Watch Multiple Streams Simultaneously
 
-A Next.js application that allows you to watch up to 4 video streams simultaneously in a 2x2 grid layout. Perfect for watching multiple sports games, live streams, or videos at the same time.
+A Next.js application that allows you to watch up to 9 video streams simultaneously in a 3x3 grid layout. Perfect for watching multiple sports games, live streams, or videos at the same time.
+
+## Screenshots
+
+### Desktop View
+![Desktop View](screenshots/screenshot-desktop.png)
+*Watch up to 4 video streams simultaneously in a 2x2 grid layout on desktop*
+
+### Mobile View
+![Mobile View](screenshots/screenshot-mobile.png)
+
+*Mobile-optimized interface for watching multiple sports streams on the go*
 
 ## Features
 
-- **2x2 Grid Layout**: Watch 4 videos simultaneously in equal quadrants
+- **Grid Layout**: Watch up to 9 videos simultaneously in equal quadrants
 - **Multi-Source Support**: 
   - YouTube videos
   - Twitch streams
@@ -45,7 +56,7 @@ npm run dev
 
 ### Adding Videos
 
-1. **Select a Quadrant**: Click on one of the numbered buttons (1-4) at the top to select which quadrant you want to load a video into
+1. **Select a Quadrant**: Click on one of the numbered buttons (1-9) at the top to select which quadrant you want to load a video into
 2. **Paste URL**: Paste your video URL in the input field
 3. **Load**: Click the "Load" button to start playing the video
 4. **Clear**: Click "Clear" to remove a video from the selected quadrant
@@ -62,7 +73,7 @@ npm run dev
 - **Focus**: Click on any quadrant to focus it (shows green border)
 - **Expand**: Click the "⛶ Expand" button on a focused video to maximize it within its quadrant
 - **Normal View**: Click "◱ Normal" or press ESC to return to normal view
-- **Quadrant Selection**: Use the numbered buttons (1-4) to select which quadrant to modify
+- **Quadrant Selection**: Use the numbered buttons (1-9) to select which quadrant to modify
 
 ## Known Limitations
 
@@ -108,7 +119,7 @@ streamatrix.live/
 
 ### Key Components
 
-- **VideoGrid**: Manages the overall grid layout, state for 4 video slots, focus state, and localStorage persistence
+- **VideoGrid**: Manages the overall grid layout, state for 9 video slots, focus state, and localStorage persistence
 - **VideoPlayer**: Handles individual video playback with multi-source support, error handling, and expand functionality
 - **VideoInput**: Provides URL input, quadrant selection, and load/clear actions
 
