@@ -526,557 +526,557 @@ export default function VideoGrid() {
 
   // Handle tap anywhere on screen to show controls button (mobile)
   const handleScreenTap = (e: React.TouchEvent | React.MouseEvent) => {
-      if (!hideTopBar) return; // Only work when top bar is hidden
+    if (!hideTopBar) return; // Only work when top bar is hidden
 
-      // Show the button on any tap
-      setShowControlsButton(true);
+    // Show the button on any tap
+    setShowControlsButton(true);
 
-      // Reset inactivity timer
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
+    // Reset inactivity timer
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    // Set timer to hide button after 7 seconds
+    inactivityTimerRef.current = setTimeout(() => {
+      setShowControlsButton(false);
+    }, 7000);
+  };
+
+  const handleSetUrl = (quadrantIndex: number, url: string) => {
+    // Only update the specific slot to minimize re-renders
+    // Use functional update to ensure we're working with the latest state
+    setVideoSlots((slots) => {
+      // Only create a new array if the URL actually changed
+      const currentSlot = slots[quadrantIndex];
+      if (currentSlot.url === url) {
+        return slots; // No change, return same array reference
       }
 
-      // Set timer to hide button after 7 seconds
-      inactivityTimerRef.current = setTimeout(() => {
-        setShowControlsButton(false);
-      }, 7000);
-    };
+      // Create new array with only the changed slot updated
+      const newSlots = [...slots];
+      newSlots[quadrantIndex] = { ...currentSlot, url };
+      return newSlots;
+    });
 
-    const handleSetUrl = (quadrantIndex: number, url: string) => {
-      // Only update the specific slot to minimize re-renders
-      // Use functional update to ensure we're working with the latest state
-      setVideoSlots((slots) => {
-        // Only create a new array if the URL actually changed
-        const currentSlot = slots[quadrantIndex];
-        if (currentSlot.url === url) {
-          return slots; // No change, return same array reference
-        }
+    // Only update focusedIndex if it's actually changing
+    setFocusedIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
 
-        // Create new array with only the changed slot updated
-        const newSlots = [...slots];
-        newSlots[quadrantIndex] = { ...currentSlot, url };
-        return newSlots;
-      });
+    if (url) {
+      setAudioFocusIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+    }
+  };
 
-      // Only update focusedIndex if it's actually changing
-      setFocusedIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+  const handleFocusSlot = React.useCallback((slotIndex: number) => {
+    setFocusedIndex(slotIndex);
+    if (videoSlots[slotIndex]?.url) {
+      setAudioFocusIndex(slotIndex);
+    }
+  }, [videoSlots]);
 
-      if (url) {
-        setAudioFocusIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
-      }
-    };
+  useEffect(() => {
+    if (!videoSlots.length) return;
+    const currentHasUrl = Boolean(videoSlots[audioFocusIndex]?.url);
+    if (currentHasUrl) {
+      return;
+    }
 
-    const handleFocusSlot = React.useCallback((slotIndex: number) => {
-      setFocusedIndex(slotIndex);
-      if (videoSlots[slotIndex]?.url) {
-        setAudioFocusIndex(slotIndex);
-      }
-    }, [videoSlots]);
+    const firstWithUrl = videoSlots.findIndex((slot) => Boolean(slot.url));
+    const fallbackIndex = firstWithUrl !== -1 ? firstWithUrl : 0;
 
-    useEffect(() => {
-      if (!videoSlots.length) return;
-      const currentHasUrl = Boolean(videoSlots[audioFocusIndex]?.url);
-      if (currentHasUrl) {
-        return;
-      }
+    if (fallbackIndex !== audioFocusIndex) {
+      setAudioFocusIndex(fallbackIndex);
+    }
+  }, [videoSlots, audioFocusIndex]);
 
-      const firstWithUrl = videoSlots.findIndex((slot) => Boolean(slot.url));
-      const fallbackIndex = firstWithUrl !== -1 ? firstWithUrl : 0;
+  // Mouse-based drag and drop handlers (works better with iframes than HTML5 DnD)
+  const handleMouseDown = React.useCallback((position: number) => {
+    console.log(`[MouseDown] Position ${position} - Starting drag`);
+    setDraggedPosition(position);
+  }, []);
 
-      if (fallbackIndex !== audioFocusIndex) {
-        setAudioFocusIndex(fallbackIndex);
-      }
-    }, [videoSlots, audioFocusIndex]);
+  const handleMouseEnter = React.useCallback((position: number) => {
+    if (draggedPosition !== null && draggedPosition !== position) {
+      console.log(`[MouseEnter] Position ${position} - Hovering over (from position ${draggedPosition})`);
+      setDragOverPosition(position);
+    }
+  }, [draggedPosition]);
 
-    // Mouse-based drag and drop handlers (works better with iframes than HTML5 DnD)
-    const handleMouseDown = React.useCallback((position: number) => {
-      console.log(`[MouseDown] Position ${position} - Starting drag`);
-      setDraggedPosition(position);
-    }, []);
+  const handleMouseLeave = React.useCallback((position: number) => {
+    if (dragOverPosition === position) {
+      setDragOverPosition(null);
+    }
+  }, [dragOverPosition]);
 
-    const handleMouseEnter = React.useCallback((position: number) => {
-      if (draggedPosition !== null && draggedPosition !== position) {
-        console.log(`[MouseEnter] Position ${position} - Hovering over (from position ${draggedPosition})`);
-        setDragOverPosition(position);
-      }
-    }, [draggedPosition]);
+  const handleMouseUp = React.useCallback((targetPosition: number) => {
+    const sourcePosition = draggedPosition;
+    console.log(`[MouseUp] Position ${targetPosition} - Mouse up (from position ${sourcePosition})`);
 
-    const handleMouseLeave = React.useCallback((position: number) => {
-      if (dragOverPosition === position) {
+    // Reset visual states
+    setDraggedPosition(null);
+    setDragOverPosition(null);
+
+    // Validate positions
+    if (sourcePosition === null || sourcePosition === targetPosition) {
+      console.log(`[MouseUp] Cancelled - same position or null source`);
+      return;
+    }
+
+    if (sourcePosition < 0 || sourcePosition >= numSlots ||
+      targetPosition < 0 || targetPosition >= numSlots) {
+      console.log(`[MouseUp] Cancelled - invalid positions`);
+      return;
+    }
+
+    // Swap slotOrder to swap which slots appear in which positions
+    // This keeps slot numbers fixed (position-based) and prevents video reloads
+    // because videos stay in their original slots, just move visually
+    // Note: We don't normalize here because a swap doesn't create duplicates,
+    // and normalization could cause unnecessary remounts
+    setSlotOrder((order) => {
+      const newOrder = [...order];
+      const temp = newOrder[sourcePosition];
+      newOrder[sourcePosition] = newOrder[targetPosition];
+      newOrder[targetPosition] = temp;
+      console.log(`[Swap] Swapped slotOrder: position ${sourcePosition} <-> position ${targetPosition}`);
+      console.log(`[Swap] New order: ${newOrder.slice(0, numSlots).join(', ')}`);
+      return newOrder;
+    });
+
+    // focusedIndex tracks slot index, not position, so it doesn't need to change
+    // when we swap positions in slotOrder
+  }, [draggedPosition, numSlots, focusedIndex, slotOrder]);
+
+  // Global mouse up to cancel drag if released outside a slot
+  React.useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (draggedPosition !== null) {
+        console.log(`[GlobalMouseUp] Drag cancelled - released outside slots`);
+        setDraggedPosition(null);
         setDragOverPosition(null);
       }
-    }, [dragOverPosition]);
+    };
 
-    const handleMouseUp = React.useCallback((targetPosition: number) => {
-      const sourcePosition = draggedPosition;
-      console.log(`[MouseUp] Position ${targetPosition} - Mouse up (from position ${sourcePosition})`);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, [draggedPosition]);
 
-      // Reset visual states
-      setDraggedPosition(null);
-      setDragOverPosition(null);
+  const handleToggleExpand = (quadrantIndex: number) => {
+    // In split mode, clicking toggles focus instead of expand
+    if (layoutMode === 'split') {
+      handleFocusSlot(quadrantIndex);
+      return;
+    }
 
-      // Validate positions
-      if (sourcePosition === null || sourcePosition === targetPosition) {
-        console.log(`[MouseUp] Cancelled - same position or null source`);
-        return;
-      }
+    // In expanded mode, clicking always expands the clicked video
+    if (layoutMode === 'expanded') {
+      handleFocusSlot(quadrantIndex);
+      setVideoSlots((slots) =>
+        slots.map((slot, i) => ({
+          ...slot,
+          isExpanded: i === quadrantIndex,
+        }))
+      );
+      return;
+    }
 
-      if (sourcePosition < 0 || sourcePosition >= numSlots ||
-        targetPosition < 0 || targetPosition >= numSlots) {
-        console.log(`[MouseUp] Cancelled - invalid positions`);
-        return;
-      }
+    // In grid mode, clicking toggles expand/collapse
+    setVideoSlots((slots) => {
+      const currentlyExpanded = slots[quadrantIndex].isExpanded;
 
-      // Swap slotOrder to swap which slots appear in which positions
-      // This keeps slot numbers fixed (position-based) and prevents video reloads
-      // because videos stay in their original slots, just move visually
-      // Note: We don't normalize here because a swap doesn't create duplicates,
-      // and normalization could cause unnecessary remounts
-      setSlotOrder((order) => {
-        const newOrder = [...order];
-        const temp = newOrder[sourcePosition];
-        newOrder[sourcePosition] = newOrder[targetPosition];
-        newOrder[targetPosition] = temp;
-        console.log(`[Swap] Swapped slotOrder: position ${sourcePosition} <-> position ${targetPosition}`);
-        console.log(`[Swap] New order: ${newOrder.slice(0, numSlots).join(', ')}`);
-        return newOrder;
-      });
-
-      // focusedIndex tracks slot index, not position, so it doesn't need to change
-      // when we swap positions in slotOrder
-    }, [draggedPosition, numSlots, focusedIndex, slotOrder]);
-
-    // Global mouse up to cancel drag if released outside a slot
-    React.useEffect(() => {
-      const handleGlobalMouseUp = () => {
-        if (draggedPosition !== null) {
-          console.log(`[GlobalMouseUp] Drag cancelled - released outside slots`);
-          setDraggedPosition(null);
-          setDragOverPosition(null);
-        }
-      };
-
-      window.addEventListener('mouseup', handleGlobalMouseUp);
-      return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-    }, [draggedPosition]);
-
-    const handleToggleExpand = (quadrantIndex: number) => {
-      // In split mode, clicking toggles focus instead of expand
-      if (layoutMode === 'split') {
-        handleFocusSlot(quadrantIndex);
-        return;
-      }
-
-      // In expanded mode, clicking always expands the clicked video
-      if (layoutMode === 'expanded') {
-        handleFocusSlot(quadrantIndex);
-        setVideoSlots((slots) =>
-          slots.map((slot, i) => ({
-            ...slot,
-            isExpanded: i === quadrantIndex,
-          }))
-        );
-        return;
-      }
-
-      // In grid mode, clicking toggles expand/collapse
-      setVideoSlots((slots) => {
-        const currentlyExpanded = slots[quadrantIndex].isExpanded;
-
-        // If clicking on an already expanded video, collapse it
-        if (currentlyExpanded) {
-          return slots.map((slot, i) =>
-            i === quadrantIndex ? { ...slot, isExpanded: false } : slot
-          );
-        }
-
-        // If clicking on a non-expanded video, collapse all others and expand this one
+      // If clicking on an already expanded video, collapse it
+      if (currentlyExpanded) {
         return slots.map((slot, i) =>
-          i === quadrantIndex
-            ? { ...slot, isExpanded: true }
-            : { ...slot, isExpanded: false }
+          i === quadrantIndex ? { ...slot, isExpanded: false } : slot
         );
-      });
-    };
+      }
 
-    const handleResetLayout = () => {
-      // Reset all split positions to default values
-      setGridVerticalSplit(50);
-      setGridHorizontalSplit(50);
-      setExpandedVerticalSplit(75);
-      setSplitHorizontalSplit(75);
-    };
+      // If clicking on a non-expanded video, collapse all others and expand this one
+      return slots.map((slot, i) =>
+        i === quadrantIndex
+          ? { ...slot, isExpanded: true }
+          : { ...slot, isExpanded: false }
+      );
+    });
+  };
 
-    return (
-      <div
-        className="w-full h-full bg-black flex flex-col overflow-hidden"
-        style={{
-          height: '100%',
-          minHeight: '-webkit-fill-available',
-        }}
-      >
-        {/* URL Input Bar */}
-        {!hideTopBar && (
-          <div
-            className="bg-zinc-900 border-b border-zinc-800 p-4"
-            style={{
-              paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
-              paddingBottom: '1rem',
-              paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
-              paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
+  const handleResetLayout = () => {
+    // Reset all split positions to default values
+    setGridVerticalSplit(50);
+    setGridHorizontalSplit(50);
+    setExpandedVerticalSplit(75);
+    setSplitHorizontalSplit(75);
+  };
+
+  return (
+    <div
+      className="w-full h-full bg-black flex flex-col overflow-hidden"
+      style={{
+        height: '100%',
+        minHeight: '-webkit-fill-available',
+      }}
+    >
+      {/* URL Input Bar */}
+      {!hideTopBar && (
+        <div
+          className="bg-zinc-900 border-b border-zinc-800 p-4"
+          style={{
+            paddingTop: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+            paddingBottom: '1rem',
+            paddingLeft: `calc(env(safe-area-inset-left, 0px) + 1rem)`,
+            paddingRight: `calc(env(safe-area-inset-right, 0px) + 1rem)`,
+          }}
+        >
+          <VideoInput
+            onSetUrl={handleSetUrl}
+            focusedIndex={focusedIndex}
+            videoSlots={videoSlots}
+            slotOrder={slotOrder}
+            onToggleTopBar={() => setHideTopBar(!hideTopBar)}
+            layoutMode={layoutMode}
+            onToggleLayout={() => {
+              const modes: ('grid' | 'expanded' | 'split')[] = ['grid', 'expanded', 'split'];
+              const currentIndex = modes.indexOf(layoutMode);
+              const nextIndex = (currentIndex + 1) % modes.length;
+              const nextMode = modes[nextIndex];
+
+              setLayoutMode(nextMode);
+
+              // Handle mode-specific behavior
+              if (nextMode === 'expanded') {
+                // Auto-expand the focused video when entering expanded mode
+                setVideoSlots((slots) =>
+                  slots.map((slot, i) => ({
+                    ...slot,
+                    isExpanded: i === focusedIndex,
+                  }))
+                );
+              } else if (nextMode === 'split') {
+                // Reset expanded states when switching to split mode
+                setVideoSlots((slots) =>
+                  slots.map((slot) => ({ ...slot, isExpanded: false }))
+                );
+              } else {
+                // Reset expanded states when switching to grid mode
+                setVideoSlots((slots) =>
+                  slots.map((slot) => ({ ...slot, isExpanded: false }))
+                );
+              }
             }}
-          >
-            <VideoInput
-              onSetUrl={handleSetUrl}
-              focusedIndex={focusedIndex}
-              videoSlots={videoSlots}
-              slotOrder={slotOrder}
-              onToggleTopBar={() => setHideTopBar(!hideTopBar)}
-              layoutMode={layoutMode}
-              onToggleLayout={() => {
-                const modes: ('grid' | 'expanded' | 'split')[] = ['grid', 'expanded', 'split'];
-                const currentIndex = modes.indexOf(layoutMode);
-                const nextIndex = (currentIndex + 1) % modes.length;
-                const nextMode = modes[nextIndex];
+            onResetLayout={handleResetLayout}
+            numSlots={numSlots}
+            onAddSlot={handleAddSlot}
+            onRemoveSlot={handleRemoveSlot}
+            singleVideoMode={singleVideoMode}
+            onToggleSingleVideoMode={() => setSingleVideoMode(!singleVideoMode)}
+            onFocusChange={handleFocusSlot}
+          />
+        </div>
+      )}
 
-                setLayoutMode(nextMode);
+      {/* Show/Hide Top Bar Button (when hidden) */}
+      {hideTopBar && showControlsButton && (
+        <button
+          onClick={() => setHideTopBar(false)}
+          className="absolute left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-50 flex items-center gap-2"
+          style={{
+            top: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
+          }}
+          title="Show controls"
+        >
+          <span>⬇️</span>
+          <span>Show Controls</span>
+        </button>
+      )}
 
-                // Handle mode-specific behavior
-                if (nextMode === 'expanded') {
-                  // Auto-expand the focused video when entering expanded mode
-                  setVideoSlots((slots) =>
-                    slots.map((slot, i) => ({
-                      ...slot,
-                      isExpanded: i === focusedIndex,
-                    }))
-                  );
-                } else if (nextMode === 'split') {
-                  // Reset expanded states when switching to split mode
-                  setVideoSlots((slots) =>
-                    slots.map((slot) => ({ ...slot, isExpanded: false }))
-                  );
-                } else {
-                  // Reset expanded states when switching to grid mode
-                  setVideoSlots((slots) =>
-                    slots.map((slot) => ({ ...slot, isExpanded: false }))
-                  );
-                }
+      {/* Responsive Video Grid with adjustable borders */}
+      <div
+        className={`flex-1 bg-zinc-950 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
+        style={{
+          position: 'relative',
+          // Extend to use all available vertical space, including safe areas
+          minHeight: 0, // Important for flex-1 to work correctly
+        }}
+        onTouchStart={handleScreenTap}
+        onClick={handleScreenTap}
+      >
+        {/* Render VideoPlayers based on numSlots and single video mode */}
+        {(() => {
+          // Single video mode: show only focused video fullscreen
+          if (singleVideoMode) {
+            const index = focusedIndex;
+            if (index < videoSlots.length) {
+              // Find the position of the focused slot in slotOrder
+              const position = slotOrder.findIndex(si => si === index);
+              const displayPosition = position !== -1 ? position : 0;
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingLeft: isPortrait ? 0 : '1px',
+                    paddingRight: isPortrait ? 0 : '1px',
+                    paddingTop: isPortrait ? '0.5px' : '1px',
+                    paddingBottom: isPortrait ? '0.5px' : '1px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <VideoPlayer
+                    key={`video-player-${index}`}
+                    url={videoSlots[index].url}
+                    quadrantIndex={index}
+                    position={displayPosition}
+                    isFocused={true}
+                    isExpanded={false}
+                    isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
+                    onFocus={() => handleFocusSlot(index)}
+                    onToggleExpand={() => handleToggleExpand(index)}
+                    onRemove={() => handleRemoveAnySlot(index)}
+                  />
+                </div>
+              );
+            }
+            return null;
+          }
+
+          // Multi-video mode: render all slots
+          // Render all 9 slots to maintain React key stability - this prevents remounts during drag and drop
+          // We use slotOrder to determine which slots are visible and their CSS positioning
+          const anyExpanded = videoSlots.some(s => s.isExpanded);
+          const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
+
+          // Render all 9 slots to keep React keys stable - this prevents remounts during drag and drop
+          // We use slotOrder to determine which slots are visible and their CSS positioning
+          return Array.from({ length: 9 }, (_, slotIndex) => {
+            // Find which position this slot is in (if visible)
+            const position = slotOrder.findIndex(si => si === slotIndex);
+            const isVisible = position !== -1 && position < numSlots;
+
+            if (!isVisible) {
+              // Slot is not visible - render hidden to maintain React key stability
+              return (
+                <div
+                  key={slotIndex}
+                  style={{ display: 'none' }}
+                />
+              );
+            }
+
+            // Calculate visual position based on current layout mode and orientation
+            // Position is used for both layout and data access (slot numbers stay fixed)
+            let style: React.CSSProperties;
+
+            if (isPortrait) {
+              // Portrait mode: Stack vertically - fill full width, minimal vertical padding
+              const heightPercent = 100 / numSlots;
+              style = {
+                position: 'absolute',
+                top: `${position * heightPercent}%`,
+                left: 0,
+                right: 0,
+                height: `${heightPercent}%`,
+                paddingLeft: 0,
+                paddingRight: 0,
+                paddingTop: '0.5px',
+                paddingBottom: '0.5px',
+                boxSizing: 'border-box',
+              };
+            } else if (layoutMode === 'split') {
+              // Landscape split mode
+              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              // Find which position the focused slot is in
+              const focusedPosition = slotOrder.findIndex(si => si === focusedIndex);
+              if (slotIndex === focusedIndex) {
+                // Top video (focused)
+                style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
+              } else {
+                // Bottom videos - calculate position among non-focused slots
+                const bottomSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
+                  .filter(p => slotOrder[p] !== focusedIndex);
+                const bottomPos = bottomSlotPositions.indexOf(position);
+                const widthPercent = 100 / Math.max(1, bottomSlotPositions.length);
+                style = {
+                  ...style,
+                  top: `${splitHorizontalSplit}%`,
+                  left: `${bottomPos * widthPercent}%`,
+                  width: `${widthPercent}%`,
+                  bottom: 0
+                };
+              }
+            } else if (anyExpanded) {
+              // Expanded mode (works in both grid and expanded layout modes)
+              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              if (slotIndex === expandedIndex) {
+                // Left expanded video
+                style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
+              } else {
+                // Right stacked videos
+                const rightSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
+                  .filter(p => slotOrder[p] !== expandedIndex);
+                const stackPos = rightSlotPositions.indexOf(position);
+                const heightPercent = 100 / Math.max(1, rightSlotPositions.length);
+                style = {
+                  ...style,
+                  top: `${stackPos * heightPercent}%`,
+                  left: `${expandedVerticalSplit}%`,
+                  right: 0,
+                  height: `${heightPercent}%`
+                };
+              }
+            } else {
+              // Grid mode
+              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              // Grid mode: calculate grid dimensions based on position
+              const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
+              const rows = Math.ceil(numSlots / cols);
+              const row = Math.floor(position / cols);
+              const col = position % cols;
+
+              if (numSlots === 1) {
+                style = { ...style, top: 0, left: 0, right: 0, bottom: 0 };
+              } else if (numSlots === 2) {
+                // Two videos side by side
+                style = {
+                  ...style,
+                  top: 0,
+                  bottom: 0,
+                  left: col === 0 ? 0 : `${gridVerticalSplit}%`,
+                  width: col === 0 ? `${gridVerticalSplit}%` : `${100 - gridVerticalSplit}%`
+                };
+              } else {
+                // Grid with multiple videos
+                const widthPercent = 100 / cols;
+                const heightPercent = 100 / rows;
+                style = {
+                  ...style,
+                  top: `${row * heightPercent}%`,
+                  left: `${col * widthPercent}%`,
+                  width: `${widthPercent}%`,
+                  height: `${heightPercent}%`
+                };
+              }
+            }
+
+            return (
+              <div
+                key={slotIndex}
+                ref={(el) => { slotRefs.current[slotIndex] = el; }}
+                style={style}
+                className="relative group"
+              >
+                {/* Drag handle - centered at the top for consistent access */}
+                <div
+                  className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/70 hover:bg-black/90 text-white p-2 rounded transition-colors select-none transition-opacity duration-200 ${draggedPosition === position ? 'cursor-grabbing opacity-100' : 'cursor-grab opacity-0 group-hover:opacity-100'
+                    }`}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent text selection
+                    e.stopPropagation();
+                    handleMouseDown(position);
+                  }}
+                  title="Drag to swap videos"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 9h4v4H3zM9.5 9h5v4h-5zM17 9h4v4h-4z" />
+                  </svg>
+                </div>
+
+                {/* Drop zone overlay - only active during drag, covers the entire slot to capture mouse events */}
+                {draggedPosition !== null && draggedPosition !== position && (
+                  <div
+                    className={`absolute inset-0 ${dragOverPosition === position ? 'bg-blue-500/30' : 'bg-black/20'
+                      }`}
+                    style={{ zIndex: 9999 }}
+                    onMouseEnter={() => handleMouseEnter(position)}
+                    onMouseLeave={() => handleMouseLeave(position)}
+                    onMouseUp={(e) => {
+                      e.stopPropagation();
+                      handleMouseUp(position);
+                    }}
+                  >
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium pointer-events-none">
+                      {dragOverPosition === position ? 'Release to swap' : 'Drop here'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show indicator on the slot being dragged */}
+                {draggedPosition === position && (
+                  <div className="absolute inset-0 bg-yellow-500/20 pointer-events-none" style={{ zIndex: 9998 }}>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                      Dragging...
+                    </div>
+                  </div>
+                )}
+                <VideoPlayer
+                  key={`video-player-${slotIndex}`}
+                  url={videoSlots[slotIndex].url}
+                  quadrantIndex={slotIndex}
+                  position={position}
+                  isFocused={focusedIndex === slotIndex}
+                  isExpanded={videoSlots[slotIndex].isExpanded}
+                  isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
+                  onFocus={() => handleFocusSlot(slotIndex)}
+                  onToggleExpand={() => handleToggleExpand(slotIndex)}
+                  onRemove={() => handleRemoveAnySlot(slotIndex)}
+                  isDraggedOver={dragOverPosition === position}
+                  isDragging={draggedPosition === position}
+                />
+              </div>
+            );
+          });
+        })()}
+
+        {/* Render splitters on top (only in landscape mode and not single video mode) */}
+        {!singleVideoMode && !isPortrait && layoutMode === 'split' && numSlots > 1 && (
+          <div style={{ position: 'absolute', top: `${splitHorizontalSplit}%`, left: 0, right: 0, transform: 'translateY(-50%)', zIndex: 1000 }}>
+            <Splitter
+              direction="horizontal"
+              onDrag={(delta) => {
+                const container = document.querySelector('.flex-1') as HTMLElement;
+                if (!container) return;
+                const containerHeight = container.clientHeight;
+                const deltaPercent = (delta / containerHeight) * 100;
+                setSplitHorizontalSplit(Math.max(20, Math.min(80, splitHorizontalSplit + deltaPercent)));
               }}
-              onResetLayout={handleResetLayout}
-              numSlots={numSlots}
-              onAddSlot={handleAddSlot}
-              onRemoveSlot={handleRemoveSlot}
-              singleVideoMode={singleVideoMode}
-              onToggleSingleVideoMode={() => setSingleVideoMode(!singleVideoMode)}
-              onFocusChange={handleFocusSlot}
             />
           </div>
         )}
 
-        {/* Show/Hide Top Bar Button (when hidden) */}
-        {hideTopBar && showControlsButton && (
-          <button
-            onClick={() => setHideTopBar(false)}
-            className="absolute left-1/2 transform -translate-x-1/2 bg-zinc-900/90 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-opacity duration-300 z-50 flex items-center gap-2"
-            style={{
-              top: `calc(env(safe-area-inset-top, 0px) + 1rem)`,
-            }}
-            title="Show controls"
-          >
-            <span>⬇️</span>
-            <span>Show Controls</span>
-          </button>
+        {!singleVideoMode && !isPortrait && videoSlots.some(s => s.isExpanded) && layoutMode !== 'split' && numSlots > 1 && (
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            <Splitter
+              direction="vertical"
+              onDrag={(delta) => {
+                const container = document.querySelector('.flex-1') as HTMLElement;
+                if (!container) return;
+                const containerWidth = container.clientWidth;
+                const deltaPercent = (delta / containerWidth) * 100;
+                setExpandedVerticalSplit(Math.max(50, Math.min(90, expandedVerticalSplit + deltaPercent)));
+              }}
+            />
+          </div>
         )}
 
-        {/* Responsive Video Grid with adjustable borders */}
-        <div
-          className={`flex-1 bg-zinc-950 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
-          style={{
-            position: 'relative',
-            // Extend to use all available vertical space, including safe areas
-            minHeight: 0, // Important for flex-1 to work correctly
-          }}
-          onTouchStart={handleScreenTap}
-          onClick={handleScreenTap}
-        >
-          {/* Render VideoPlayers based on numSlots and single video mode */}
-          {(() => {
-            // Single video mode: show only focused video fullscreen
-            if (singleVideoMode) {
-              const index = focusedIndex;
-              if (index < videoSlots.length) {
-                // Find the position of the focused slot in slotOrder
-                const position = slotOrder.findIndex(si => si === index);
-                const displayPosition = position !== -1 ? position : 0;
-
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      paddingLeft: isPortrait ? 0 : '4px',
-                      paddingRight: isPortrait ? 0 : '4px',
-                      paddingTop: isPortrait ? '2px' : '4px',
-                      paddingBottom: isPortrait ? '2px' : '4px',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    <VideoPlayer
-                      key={`video-player-${index}`}
-                      url={videoSlots[index].url}
-                      quadrantIndex={index}
-                      position={displayPosition}
-                      isFocused={true}
-                      isExpanded={false}
-                      isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
-                      onFocus={() => handleFocusSlot(index)}
-                      onToggleExpand={() => handleToggleExpand(index)}
-                      onRemove={() => handleRemoveAnySlot(index)}
-                    />
-                  </div>
-                );
-              }
-              return null;
-            }
-
-            // Multi-video mode: render all slots
-            // Render all 9 slots to maintain React key stability - this prevents remounts during drag and drop
-            // We use slotOrder to determine which slots are visible and their CSS positioning
-            const anyExpanded = videoSlots.some(s => s.isExpanded);
-            const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
-
-            // Render all 9 slots to keep React keys stable - this prevents remounts during drag and drop
-            // We use slotOrder to determine which slots are visible and their CSS positioning
-            return Array.from({ length: 9 }, (_, slotIndex) => {
-              // Find which position this slot is in (if visible)
-              const position = slotOrder.findIndex(si => si === slotIndex);
-              const isVisible = position !== -1 && position < numSlots;
-
-              if (!isVisible) {
-                // Slot is not visible - render hidden to maintain React key stability
-                return (
-                  <div
-                    key={slotIndex}
-                    style={{ display: 'none' }}
-                  />
-                );
-              }
-
-              // Calculate visual position based on current layout mode and orientation
-              // Position is used for both layout and data access (slot numbers stay fixed)
-              let style: React.CSSProperties;
-
-              if (isPortrait) {
-                // Portrait mode: Stack vertically - fill full width, minimal vertical padding
-                const heightPercent = 100 / numSlots;
-                style = {
-                  position: 'absolute',
-                  top: `${position * heightPercent}%`,
-                  left: 0,
-                  right: 0,
-                  height: `${heightPercent}%`,
-                  paddingLeft: 0,
-                  paddingRight: 0,
-                  paddingTop: '2px',
-                  paddingBottom: '2px',
-                  boxSizing: 'border-box',
-                };
-              } else if (layoutMode === 'split') {
-                // Landscape split mode
-                style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-                // Find which position the focused slot is in
-                const focusedPosition = slotOrder.findIndex(si => si === focusedIndex);
-                if (slotIndex === focusedIndex) {
-                  // Top video (focused)
-                  style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
-                } else {
-                  // Bottom videos - calculate position among non-focused slots
-                  const bottomSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
-                    .filter(p => slotOrder[p] !== focusedIndex);
-                  const bottomPos = bottomSlotPositions.indexOf(position);
-                  const widthPercent = 100 / Math.max(1, bottomSlotPositions.length);
-                  style = {
-                    ...style,
-                    top: `${splitHorizontalSplit}%`,
-                    left: `${bottomPos * widthPercent}%`,
-                    width: `${widthPercent}%`,
-                    bottom: 0
-                  };
-                }
-              } else if (anyExpanded) {
-                // Expanded mode (works in both grid and expanded layout modes)
-                style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-                if (slotIndex === expandedIndex) {
-                  // Left expanded video
-                  style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
-                } else {
-                  // Right stacked videos
-                  const rightSlotPositions = Array.from({ length: numSlots }, (_, i) => i)
-                    .filter(p => slotOrder[p] !== expandedIndex);
-                  const stackPos = rightSlotPositions.indexOf(position);
-                  const heightPercent = 100 / Math.max(1, rightSlotPositions.length);
-                  style = {
-                    ...style,
-                    top: `${stackPos * heightPercent}%`,
-                    left: `${expandedVerticalSplit}%`,
-                    right: 0,
-                    height: `${heightPercent}%`
-                  };
-                }
-              } else {
-                // Grid mode
-                style = { position: 'absolute', padding: '4px', boxSizing: 'border-box' };
-                // Grid mode: calculate grid dimensions based on position
-                const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
-                const rows = Math.ceil(numSlots / cols);
-                const row = Math.floor(position / cols);
-                const col = position % cols;
-
-                if (numSlots === 1) {
-                  style = { ...style, top: 0, left: 0, right: 0, bottom: 0 };
-                } else if (numSlots === 2) {
-                  // Two videos side by side
-                  style = {
-                    ...style,
-                    top: 0,
-                    bottom: 0,
-                    left: col === 0 ? 0 : `${gridVerticalSplit}%`,
-                    width: col === 0 ? `${gridVerticalSplit}%` : `${100 - gridVerticalSplit}%`
-                  };
-                } else {
-                  // Grid with multiple videos
-                  const widthPercent = 100 / cols;
-                  const heightPercent = 100 / rows;
-                  style = {
-                    ...style,
-                    top: `${row * heightPercent}%`,
-                    left: `${col * widthPercent}%`,
-                    width: `${widthPercent}%`,
-                    height: `${heightPercent}%`
-                  };
-                }
-              }
-
-              return (
-                <div
-                  key={slotIndex}
-                  ref={(el) => { slotRefs.current[slotIndex] = el; }}
-                  style={style}
-                  className="relative group"
-                >
-                  {/* Drag handle - centered at the top for consistent access */}
-                  <div
-                    className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/70 hover:bg-black/90 text-white p-2 rounded transition-colors select-none transition-opacity duration-200 ${draggedPosition === position ? 'cursor-grabbing opacity-100' : 'cursor-grab opacity-0 group-hover:opacity-100'
-                      }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent text selection
-                      e.stopPropagation();
-                      handleMouseDown(position);
-                    }}
-                    title="Drag to swap videos"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M3 9h4v4H3zM9.5 9h5v4h-5zM17 9h4v4h-4z" />
-                    </svg>
-                  </div>
-
-                  {/* Drop zone overlay - only active during drag, covers the entire slot to capture mouse events */}
-                  {draggedPosition !== null && draggedPosition !== position && (
-                    <div
-                      className={`absolute inset-0 ${dragOverPosition === position ? 'bg-blue-500/30' : 'bg-black/20'
-                        }`}
-                      style={{ zIndex: 9999 }}
-                      onMouseEnter={() => handleMouseEnter(position)}
-                      onMouseLeave={() => handleMouseLeave(position)}
-                      onMouseUp={(e) => {
-                        e.stopPropagation();
-                        handleMouseUp(position);
-                      }}
-                    >
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium pointer-events-none">
-                        {dragOverPosition === position ? 'Release to swap' : 'Drop here'}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Show indicator on the slot being dragged */}
-                  {draggedPosition === position && (
-                    <div className="absolute inset-0 bg-yellow-500/20 pointer-events-none" style={{ zIndex: 9998 }}>
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                        Dragging...
-                      </div>
-                    </div>
-                  )}
-                  <VideoPlayer
-                    key={`video-player-${slotIndex}`}
-                    url={videoSlots[slotIndex].url}
-                    quadrantIndex={slotIndex}
-                    position={position}
-                    isFocused={focusedIndex === slotIndex}
-                    isExpanded={videoSlots[slotIndex].isExpanded}
-                    isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
-                    onFocus={() => handleFocusSlot(slotIndex)}
-                    onToggleExpand={() => handleToggleExpand(slotIndex)}
-                    onRemove={() => handleRemoveAnySlot(slotIndex)}
-                    isDraggedOver={dragOverPosition === position}
-                    isDragging={draggedPosition === position}
-                  />
-                </div>
-              );
-            });
-          })()}
-
-          {/* Render splitters on top (only in landscape mode and not single video mode) */}
-          {!singleVideoMode && !isPortrait && layoutMode === 'split' && numSlots > 1 && (
-            <div style={{ position: 'absolute', top: `${splitHorizontalSplit}%`, left: 0, right: 0, transform: 'translateY(-50%)', zIndex: 1000 }}>
-              <Splitter
-                direction="horizontal"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerHeight = container.clientHeight;
-                  const deltaPercent = (delta / containerHeight) * 100;
-                  setSplitHorizontalSplit(Math.max(20, Math.min(80, splitHorizontalSplit + deltaPercent)));
-                }}
-              />
-            </div>
-          )}
-
-          {!singleVideoMode && !isPortrait && videoSlots.some(s => s.isExpanded) && layoutMode !== 'split' && numSlots > 1 && (
-            <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
-              <Splitter
-                direction="vertical"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerWidth = container.clientWidth;
-                  const deltaPercent = (delta / containerWidth) * 100;
-                  setExpandedVerticalSplit(Math.max(50, Math.min(90, expandedVerticalSplit + deltaPercent)));
-                }}
-              />
-            </div>
-          )}
-
-          {!singleVideoMode && !isPortrait && !videoSlots.some(s => s.isExpanded) && layoutMode === 'grid' && numSlots === 2 && (
-            <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${gridVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
-              <Splitter
-                direction="vertical"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerWidth = container.clientWidth;
-                  const deltaPercent = (delta / containerWidth) * 100;
-                  setGridVerticalSplit(Math.max(20, Math.min(80, gridVerticalSplit + deltaPercent)));
-                }}
-              />
-            </div>
-          )}
-        </div>
+        {!singleVideoMode && !isPortrait && !videoSlots.some(s => s.isExpanded) && layoutMode === 'grid' && numSlots === 2 && (
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${gridVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
+            <Splitter
+              direction="vertical"
+              onDrag={(delta) => {
+                const container = document.querySelector('.flex-1') as HTMLElement;
+                if (!container) return;
+                const containerWidth = container.clientWidth;
+                const deltaPercent = (delta / containerWidth) * 100;
+                setGridVerticalSplit(Math.max(20, Math.min(80, gridVerticalSplit + deltaPercent)));
+              }}
+            />
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
