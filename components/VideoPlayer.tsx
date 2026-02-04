@@ -150,7 +150,7 @@ function VideoPlayerComponent({
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const activityTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Streameast server options state
   const [streameastServers, setStreameastServers] = useState<Array<{ name: string; url: string }>>([]);
   const [selectedStreameastServer, setSelectedStreameastServer] = useState<string | null>(null);
@@ -184,7 +184,7 @@ function VideoPlayerComponent({
     if (!url) return false;
     return url.toLowerCase().includes('crackstreams');
   }, [url]);
-  
+
   const isStreameastUrl = useMemo(() => {
     if (!url) return false;
     const lowerUrl = url.toLowerCase();
@@ -214,7 +214,7 @@ function VideoPlayerComponent({
     if (extractedStream?.type === 'hls' && extractedStream.url) {
       return extractedStream.url;
     }
-    
+
     if (detectedVideoType === 'streaming-site') {
       // For Streameast, use selected server URL if available, otherwise use extracted/default
       if (isStreameastUrl && selectedStreameastServer) {
@@ -327,14 +327,14 @@ function VideoPlayerComponent({
   // Close server selector when clicking outside
   useEffect(() => {
     if (!showServerSelector) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-server-selector]')) {
         setShowServerSelector(false);
       }
     };
-    
+
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
@@ -344,14 +344,14 @@ function VideoPlayerComponent({
   // Close streaming options dropdown when clicking outside
   useEffect(() => {
     if (!showStreamingOptions) return;
-    
+
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest('[data-streaming-options]')) {
         setShowStreamingOptions(false);
       }
     };
-    
+
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
@@ -395,8 +395,8 @@ function VideoPlayerComponent({
     try {
       const hostname = new URL(streamingBaseUrl).hostname;
       const allowlist = [
-        'embednow.top', 
-        'embednow.online', 
+        'embednow.top',
+        'embednow.online',
         'embedstream.tv',
         'embedsports.top', // Streameast embedding domain
         'embedsports.online',
@@ -432,7 +432,7 @@ function VideoPlayerComponent({
       setIframeBlocked(false);
       if (loadTimer) clearTimeout(loadTimer);
       if (blockedCheckTimer) clearTimeout(blockedCheckTimer);
-      
+
       // For proxy mode, check after load if content is actually accessible
       if (useProxy) {
         setTimeout(() => {
@@ -444,22 +444,22 @@ function VideoPlayerComponent({
               if (iframeDoc && iframeDoc.body) {
                 const bodyText = iframeDoc.body.textContent || '';
                 const bodyHTML = iframeDoc.body.innerHTML || '';
-                
+
                 // Only mark as blocked if we see SPECIFIC error messages AND no video player
                 const hasErrorMessage = (
-                  bodyText.toLowerCase().includes('remove sandbox attributes') || 
+                  bodyText.toLowerCase().includes('remove sandbox attributes') ||
                   bodyText.toLowerCase().includes('not allowed to be embedded') ||
                   (bodyText.toLowerCase().includes('iframe') && bodyText.toLowerCase().includes('sandbox') && bodyText.length < 500)
                 );
-                
+
                 // Check if there's actually a video player present
                 const hasVideoPlayer = (
-                  bodyHTML.includes('<video') || 
-                  bodyHTML.includes('jwplayer') || 
+                  bodyHTML.includes('<video') ||
+                  bodyHTML.includes('jwplayer') ||
                   bodyHTML.includes('video-js') ||
                   iframeDoc.querySelector('video') !== null
                 );
-                
+
                 // Only show error if we have error message AND no video player
                 if (hasErrorMessage && !hasVideoPlayer) {
                   console.warn('[PROXY] Detected error message in proxied content - showing overlay');
@@ -483,12 +483,12 @@ function VideoPlayerComponent({
 
     const checkIfBlocked = () => {
       if (hasLoaded) return; // Already loaded, not blocked
-      
+
       if (iframeRef.current) {
         // Check if iframe has dimensions (indicates content loaded)
         const rect = iframeRef.current.getBoundingClientRect();
         const hasDimensions = rect.width > 0 && rect.height > 0;
-        
+
         // For same-origin, check contentDocument
         // For cross-origin, we rely on load event and dimensions
         if (isSameOriginUrl(iframeTarget)) {
@@ -503,13 +503,13 @@ function VideoPlayerComponent({
             return;
           }
         }
-        
+
         // If we have dimensions or iframe loaded, it's not blocked
         if (hasDimensions) {
           setIframeBlocked(false);
           return;
         }
-        
+
         // If no dimensions and no load event after delay, likely blocked
         // But give it more time - some sites take longer to load
         blockedCheckTimer = setTimeout(() => {
@@ -526,7 +526,7 @@ function VideoPlayerComponent({
     if (iframeRef.current) {
       // Listen for load event
       iframeRef.current.addEventListener('load', handleIframeLoad);
-      
+
       // Initial check after short delay
       loadTimer = setTimeout(() => {
         checkIfBlocked();
@@ -774,7 +774,7 @@ function VideoPlayerComponent({
         try {
           wakeLock = await (navigator as any).wakeLock.request('screen');
           console.log('[WAKE LOCK] Screen wake lock acquired');
-          
+
           // Handle wake lock release (e.g., when user switches tabs)
           if (wakeLock) {
             wakeLock.addEventListener('release', () => {
@@ -826,7 +826,7 @@ function VideoPlayerComponent({
 
     // Only prevent screen lock if there's an active video playing
     const hasActiveVideo = url && (videoType === 'hls' || videoType === 'video' || videoType === 'youtube' || videoType === 'twitch' || videoType === 'streaming-site');
-    
+
     if (hasActiveVideo) {
       requestWakeLock();
       startActivitySimulation();
@@ -835,7 +835,7 @@ function VideoPlayerComponent({
     return () => {
       // Cleanup
       if (wakeLock) {
-        wakeLock.release().catch(() => {});
+        wakeLock.release().catch(() => { });
         wakeLock = null;
       }
       stopActivitySimulation();
@@ -1133,7 +1133,6 @@ function VideoPlayerComponent({
               overflow: 'hidden',
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
             }}
             title={`Video player ${position + 1}`}
           />
@@ -1225,15 +1224,15 @@ function VideoPlayerComponent({
                     </svg>
                   </div>
                   <h3 className="text-white text-sm font-semibold mb-1 px-2">
-                    {iframeBlocked && hasUserMadeChoice 
+                    {iframeBlocked && hasUserMadeChoice
                       ? (useProxy ? 'Proxy Failed to Load' : 'Embedding Restricted')
                       : 'Choose Loading Method'}
                   </h3>
                   <p className="text-zinc-400 text-xs leading-tight px-2">
                     {iframeBlocked && hasUserMadeChoice
-                      ? (useProxy 
-                          ? 'The proxy could not load this page. Try direct mode or open in a new tab.'
-                          : 'Site prevents embedded playback. Try using the proxy or open directly.')
+                      ? (useProxy
+                        ? 'The proxy could not load this page. Try direct mode or open in a new tab.'
+                        : 'Site prevents embedded playback. Try using the proxy or open directly.')
                       : 'How would you like to load this streaming site?'}
                   </p>
                 </div>
@@ -1280,10 +1279,10 @@ function VideoPlayerComponent({
             <>
               {(isExtractingStream || isFetchingStreameastServers || isSwitchingServer) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-sm font-semibold z-30">
-                  {isSwitchingServer 
-                    ? 'Switching server...' 
-                    : isFetchingStreameastServers 
-                      ? 'Fetching Streameast servers...' 
+                  {isSwitchingServer
+                    ? 'Switching server...'
+                    : isFetchingStreameastServers
+                      ? 'Fetching Streameast servers...'
                       : 'Fetching CrackStreams player...'}
                 </div>
               )}
@@ -1327,8 +1326,8 @@ function VideoPlayerComponent({
                 }}
                 // Key changes when server changes or proxy mode changes, forcing complete remount
                 // This ensures a clean iframe element, preventing browser navigation warnings
-                key={`${isStreameastUrl && selectedStreameastServer 
-                  ? `streameast-${selectedStreameastServer}` 
+                key={`${isStreameastUrl && selectedStreameastServer
+                  ? `streameast-${selectedStreameastServer}`
                   : `streaming-${quadrantIndex}-${streamingIframeSrc || url}`}-${useProxy ? 'proxy' : 'direct'}`}
                 // Always prefer direct URL (client-side) - browser makes request from user's IP
                 // Only use proxy if explicitly enabled (as fallback for X-Frame-Options)
@@ -1344,7 +1343,7 @@ function VideoPlayerComponent({
                   // Reset iframe blocked check when iframe loads
                   setIframeBlocked(false);
                   setIsSwitchingServer(false);
-                  
+
                   // If using proxy, check after a delay if the page loaded successfully
                   // Some sites show errors even when embedded via proxy
                   if (useProxy) {
@@ -1364,7 +1363,7 @@ function VideoPlayerComponent({
                 onError={(e) => {
                   e.stopPropagation();
                   console.error('Iframe failed to load', useProxy ? `(using proxy${useFallbackProxy ? ' - fallback' : ' - primary'})` : '(direct)');
-                  
+
                   // If using primary proxy and fallback is available, try fallback
                   const hasFallback = !!process.env.NEXT_PUBLIC_FALLBACK_PROXY_URL;
                   if (useProxy && !useFallbackProxy && hasFallback) {
@@ -1385,127 +1384,124 @@ function VideoPlayerComponent({
                 </div>
               )}
               {/* Streaming Site Options Dropdown - Always show button, just control opacity */}
-              <div 
+              <div
                 data-streaming-options
                 className={`absolute top-14 left-4 z-30 transition-opacity duration-200 ${showHoverLabels || showStreamingOptions ? 'opacity-100' : 'opacity-0'} ${!(showHoverLabels || showStreamingOptions) ? 'pointer-events-none' : ''}`}
               >
-                  {showStreamingOptions ? (
-                    <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[180px] pointer-events-auto">
-                      <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
-                        <span className="text-white text-xs font-semibold">Connection Options</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowStreamingOptions(false);
-                          }}
-                          className="text-zinc-400 hover:text-white transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="py-1">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Close dropdown first to ensure it doesn't block the iframe
-                            setShowStreamingOptions(false);
-                            // Use setTimeout to ensure dropdown closes before iframe remounts
-                            setTimeout(() => {
-                              setUseProxy(true);
-                              setIframeBlocked(false);
-                            }, 50);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${
-                            useProxy
-                              ? 'bg-emerald-600 text-white'
-                              : 'text-zinc-300 hover:bg-zinc-800'
-                          }`}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span>Use Proxy</span>
-                          {useProxy && (
-                            <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Close dropdown first to ensure it doesn't block the iframe
-                            setShowStreamingOptions(false);
-                            // Use setTimeout to ensure dropdown closes before iframe remounts
-                            setTimeout(() => {
-                              setUseProxy(false);
-                              setIframeBlocked(false);
-                            }, 50);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${
-                            !useProxy
-                              ? 'bg-blue-600 text-white'
-                              : 'text-zinc-300 hover:bg-zinc-800'
-                          }`}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                          <span>Use Direct</span>
-                          {!useProxy && (
-                            <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
+                {showStreamingOptions ? (
+                  <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[180px] pointer-events-auto">
+                    <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
+                      <span className="text-white text-xs font-semibold">Connection Options</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowStreamingOptions(false);
+                        }}
+                        className="text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowStreamingOptions(true);
-                        // Keep mobile labels visible when opening dropdown
-                        if (isMobileDevice) {
-                          triggerMobileLabels();
-                        }
-                      }}
-                      className={`px-3 py-1 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-1.5 pointer-events-auto flex-shrink-0 whitespace-nowrap ${
-                        useProxy
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                    <div className="py-1">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Close dropdown first to ensure it doesn't block the iframe
+                          setShowStreamingOptions(false);
+                          // Use setTimeout to ensure dropdown closes before iframe remounts
+                          setTimeout(() => {
+                            setUseProxy(true);
+                            setIframeBlocked(false);
+                          }, 50);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${useProxy
+                            ? 'bg-emerald-600 text-white'
+                            : 'text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Use Proxy</span>
+                        {useProxy && (
+                          <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Close dropdown first to ensure it doesn't block the iframe
+                          setShowStreamingOptions(false);
+                          // Use setTimeout to ensure dropdown closes before iframe remounts
+                          setTimeout(() => {
+                            setUseProxy(false);
+                            setIframeBlocked(false);
+                          }, 50);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${!useProxy
+                            ? 'bg-blue-600 text-white'
+                            : 'text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                        <span>Use Direct</span>
+                        {!useProxy && (
+                          <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowStreamingOptions(true);
+                      // Keep mobile labels visible when opening dropdown
+                      if (isMobileDevice) {
+                        triggerMobileLabels();
+                      }
+                    }}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-1.5 pointer-events-auto flex-shrink-0 whitespace-nowrap ${useProxy
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-purple-600 hover:bg-purple-700 text-white'
                       }`}
-                      title="Connection options"
-                    >
-                      {useProxy ? (
-                        <>
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span className="whitespace-nowrap">🔄 PROXIED</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                          </svg>
-                          <span className="whitespace-nowrap">🌐 STREAMING SITE</span>
-                        </>
-                      )}
-                      <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  )}
+                    title="Connection options"
+                  >
+                    {useProxy ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="whitespace-nowrap">🔄 PROXIED</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        <span className="whitespace-nowrap">🌐 STREAMING SITE</span>
+                      </>
+                    )}
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )}
               </div>
-              
+
               {/* Streameast Server Selector and Proxy Toggle - Bottom Right */}
               {isStreameastUrl && (
-                <div 
+                <div
                   data-server-selector
                   className={`absolute bottom-16 right-4 z-30 transition-opacity duration-200 flex gap-2 ${showHoverLabels || showServerSelector ? 'opacity-100' : 'opacity-0'}`}
                   style={showServerSelector ? { bottom: 'auto', top: '50%', transform: 'translateY(-50%)' } : {}}
@@ -1535,10 +1531,10 @@ function VideoPlayerComponent({
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                
+
                                 // Prevent any navigation warnings by using a clean remount approach
                                 setIsSwitchingServer(true);
-                                
+
                                 // Update server selection - React key change will force iframe remount
                                 setSelectedStreameastServer(server.url);
                                 setExtractedStream({
@@ -1546,20 +1542,19 @@ function VideoPlayerComponent({
                                   type: 'iframe',
                                 });
                                 setShowServerSelector(false);
-                                
+
                                 // Reset iframe blocked state when switching servers
                                 setIframeBlocked(false);
-                                
+
                                 // Clear switching state after a brief moment to allow iframe to start loading
                                 setTimeout(() => {
                                   setIsSwitchingServer(false);
                                 }, 500);
                               }}
-                              className={`w-full px-3 py-2 text-left text-xs transition-colors ${
-                                selectedStreameastServer === server.url
+                              className={`w-full px-3 py-2 text-left text-xs transition-colors ${selectedStreameastServer === server.url
                                   ? 'bg-blue-600 text-white'
                                   : 'text-zinc-300 hover:bg-zinc-800'
-                              }`}
+                                }`}
                             >
                               {server.name}
                             </button>
@@ -1670,122 +1665,119 @@ function VideoPlayerComponent({
                 </div>
               )}
               {/* Generic Streaming Options Dropdown - Always show button, just control opacity */}
-              <div 
+              <div
                 data-streaming-options
                 className={`absolute top-14 left-4 z-30 transition-opacity duration-200 ${showHoverLabels || showStreamingOptions ? 'opacity-100' : 'opacity-0'} ${!(showHoverLabels || showStreamingOptions) ? 'pointer-events-none' : ''}`}
               >
-                  {showStreamingOptions ? (
-                    <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[180px] pointer-events-auto">
-                      <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
-                        <span className="text-white text-xs font-semibold">Connection Options</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowStreamingOptions(false);
-                          }}
-                          className="text-zinc-400 hover:text-white transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                      <div className="py-1">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Close dropdown first to ensure it doesn't block the iframe
-                            setShowStreamingOptions(false);
-                            // Use setTimeout to ensure dropdown closes before iframe remounts
-                            setTimeout(() => {
-                              setUseProxy(true);
-                              setIframeBlocked(false);
-                            }, 50);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${
-                            useProxy
-                              ? 'bg-emerald-600 text-white'
-                              : 'text-zinc-300 hover:bg-zinc-800'
-                          }`}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span>Use Proxy</span>
-                          {useProxy && (
-                            <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            // Close dropdown first to ensure it doesn't block the iframe
-                            setShowStreamingOptions(false);
-                            // Use setTimeout to ensure dropdown closes before iframe remounts
-                            setTimeout(() => {
-                              setUseProxy(false);
-                              setIframeBlocked(false);
-                            }, 50);
-                          }}
-                          className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${
-                            !useProxy
-                              ? 'bg-blue-600 text-white'
-                              : 'text-zinc-300 hover:bg-zinc-800'
-                          }`}
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                          </svg>
-                          <span>Use Direct</span>
-                          {!useProxy && (
-                            <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
+                {showStreamingOptions ? (
+                  <div className="bg-black/90 backdrop-blur-sm border border-zinc-700 rounded-lg shadow-lg overflow-hidden min-w-[180px] pointer-events-auto">
+                    <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
+                      <span className="text-white text-xs font-semibold">Connection Options</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowStreamingOptions(false);
+                        }}
+                        className="text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowStreamingOptions(true);
-                        // Keep mobile labels visible when opening dropdown
-                        if (isMobileDevice) {
-                          triggerMobileLabels();
-                        }
-                      }}
-                      className={`px-3 py-1 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-1.5 pointer-events-auto flex-shrink-0 whitespace-nowrap ${
-                        useProxy
-                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    <div className="py-1">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Close dropdown first to ensure it doesn't block the iframe
+                          setShowStreamingOptions(false);
+                          // Use setTimeout to ensure dropdown closes before iframe remounts
+                          setTimeout(() => {
+                            setUseProxy(true);
+                            setIframeBlocked(false);
+                          }, 50);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${useProxy
+                            ? 'bg-emerald-600 text-white'
+                            : 'text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span>Use Proxy</span>
+                        {useProxy && (
+                          <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Close dropdown first to ensure it doesn't block the iframe
+                          setShowStreamingOptions(false);
+                          // Use setTimeout to ensure dropdown closes before iframe remounts
+                          setTimeout(() => {
+                            setUseProxy(false);
+                            setIframeBlocked(false);
+                          }, 50);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs transition-colors flex items-center gap-2 ${!useProxy
+                            ? 'bg-blue-600 text-white'
+                            : 'text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                        <span>Use Direct</span>
+                        {!useProxy && (
+                          <svg className="w-3 h-3 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowStreamingOptions(true);
+                      // Keep mobile labels visible when opening dropdown
+                      if (isMobileDevice) {
+                        triggerMobileLabels();
+                      }
+                    }}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-1.5 pointer-events-auto flex-shrink-0 whitespace-nowrap ${useProxy
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
                       }`}
-                      title="Connection options"
-                    >
-                      {useProxy ? (
-                        <>
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span className="whitespace-nowrap">🔄 PROXIED</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                          </svg>
-                          <span className="whitespace-nowrap">🌐 WEB PAGE</span>
-                        </>
-                      )}
-                      <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  )}
+                    title="Connection options"
+                  >
+                    {useProxy ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        <span className="whitespace-nowrap">🔄 PROXIED</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                        <span className="whitespace-nowrap">🌐 WEB PAGE</span>
+                      </>
+                    )}
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )}
               </div>
               {/* Mute indicator removed for generic iframes - mute control is inconsistent and not functional for iframes */}
             </>

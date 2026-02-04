@@ -29,11 +29,28 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   /* Use full viewport height, extending into safe areas for maximum space */
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  height: 100dvh;
+  /* Dynamic viewport height for mobile browsers */
   min-height: -webkit-fill-available;
   /* Extend into safe areas - videos can use full screen */
   width: 100vw;
-  width: 100dvw; /* Dynamic viewport width for mobile browsers */
+  width: 100dvw;
+  /* Dynamic viewport width for mobile browsers */
+  /* Force absolute edge-to-edge on all devices */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Ensure root div also extends edge to edge */
+#__next,
+[id^="__next"] {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 /* Responsive grid layout based on orientation */
@@ -41,6 +58,7 @@ body {
   .portrait\:grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
+
   .portrait\:grid-rows-4 {
     grid-template-rows: repeat(4, minmax(0, 1fr));
   }
@@ -50,6 +68,7 @@ body {
   .landscape\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .landscape\:grid-rows-2 {
     grid-template-rows: repeat(2, minmax(0, 1fr));
   }

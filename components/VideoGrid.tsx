@@ -712,7 +712,11 @@ export default function VideoGrid() {
       className="w-full h-full bg-black flex flex-col overflow-hidden"
       style={{
         height: '100%',
+        width: '100%',
         minHeight: '-webkit-fill-available',
+        margin: 0,
+        padding: 0,
+        position: 'relative',
       }}
     >
       {/* URL Input Bar */}
@@ -795,6 +799,9 @@ export default function VideoGrid() {
           position: 'relative',
           // Extend to use all available vertical space, including safe areas
           minHeight: 0, // Important for flex-1 to work correctly
+          width: '100%',
+          margin: 0,
+          padding: 0,
         }}
         onTouchStart={handleScreenTap}
         onClick={handleScreenTap}
@@ -818,10 +825,7 @@ export default function VideoGrid() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    paddingLeft: isPortrait ? 0 : '1px',
-                    paddingRight: isPortrait ? 0 : '1px',
-                    paddingTop: isPortrait ? '0.5px' : '1px',
-                    paddingBottom: isPortrait ? '0.5px' : '1px',
+                    padding: 0,
                     boxSizing: 'border-box',
                   }}
                 >
@@ -879,15 +883,12 @@ export default function VideoGrid() {
                 left: 0,
                 right: 0,
                 height: `${heightPercent}%`,
-                paddingLeft: 0,
-                paddingRight: 0,
-                paddingTop: '0.5px',
-                paddingBottom: '0.5px',
+                padding: 0,
                 boxSizing: 'border-box',
               };
             } else if (layoutMode === 'split') {
               // Landscape split mode
-              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              style = { position: 'absolute', padding: '0.5px', boxSizing: 'border-box' };
               // Find which position the focused slot is in
               const focusedPosition = slotOrder.findIndex(si => si === focusedIndex);
               if (slotIndex === focusedIndex) {
@@ -909,7 +910,7 @@ export default function VideoGrid() {
               }
             } else if (anyExpanded) {
               // Expanded mode (works in both grid and expanded layout modes)
-              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              style = { position: 'absolute', padding: '0.5px', boxSizing: 'border-box' };
               if (slotIndex === expandedIndex) {
                 // Left expanded video
                 style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
@@ -929,7 +930,7 @@ export default function VideoGrid() {
               }
             } else {
               // Grid mode
-              style = { position: 'absolute', padding: '1px', boxSizing: 'border-box' };
+              style = { position: 'absolute', padding: '0.5px', boxSizing: 'border-box' };
               // Grid mode: calculate grid dimensions based on position
               const cols = numSlots <= 2 ? numSlots : Math.ceil(Math.sqrt(numSlots));
               const rows = Math.ceil(numSlots / cols);
