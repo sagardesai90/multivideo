@@ -220,3 +220,223 @@ test('drag threshold logic - should not trigger for small movements', () => {
     assert.equal(thresholdMet1, false, 'Small movement should not meet threshold');
     assert.equal(thresholdMet2, true, 'Large movement should meet threshold');
 });
+
+// Helper that mirrors the updated handleMouseUp in VideoGrid.tsx
+function simulateDragDropSwap({
+    sourcePosition,
+    targetPosition,
+    numSlots,
+    slotOrder,
+    layoutMode,
+    focusedIndex,
+    videoSlots,
+}: {
+    sourcePosition: number;
+    targetPosition: number;
+    numSlots: number;
+    slotOrder: number[];
+    layoutMode: 'grid' | 'expanded' | 'split';
+    focusedIndex: number;
+    videoSlots: VideoSlot[];
+}) {
+    if (sourcePosition < 0 || sourcePosition >= numSlots || targetPosition < 0 || targetPosition >= numSlots) {
+        return { slotOrder, focusedIndex, videoSlots };
+    }
+    if (sourcePosition === targetPosition) {
+        return { slotOrder, focusedIndex, videoSlots };
+    }
+
+    const sourceSlot = slotOrder[sourcePosition];
+    const targetSlot = slotOrder[targetPosition];
+
+    const newOrder = [...slotOrder];
+    const temp = newOrder[sourcePosition];
+    newOrder[sourcePosition] = newOrder[targetPosition];
+    newOrder[targetPosition] = temp;
+
+    let newFocusedIndex = focusedIndex;
+    let newVideoSlots = [...videoSlots];
+
+    const anyExpanded = videoSlots.some((s) => s.isExpanded);
+    const expandedIndex = videoSlots.findIndex((s) => s.isExpanded);
+
+    if (layoutMode === 'split') {
+        if (sourceSlot === focusedIndex) {
+            newFocusedIndex = targetSlot;
+        } else if (targetSlot === focusedIndex) {
+            newFocusedIndex = sourceSlot;
+        }
+    } else if (layoutMode === 'expanded' || anyExpanded) {
+        const isSourceFeatured = sourceSlot === expandedIndex || (layoutMode === 'expanded' && sourceSlot === focusedIndex);
+        const isTargetFeatured = targetSlot === expandedIndex || (layoutMode === 'expanded' && targetSlot === focusedIndex);
+
+        if (isSourceFeatured) {
+            newVideoSlots = videoSlots.map((slot, i) => ({
+                ...slot,
+                isExpanded: i === targetSlot,
+            }));
+            newFocusedIndex = targetSlot;
+        } else if (isTargetFeatured) {
+            newVideoSlots = videoSlots.map((slot, i) => ({
+                ...slot,
+                isExpanded: i === sourceSlot,
+            }));
+            newFocusedIndex = sourceSlot;
+        }
+    }
+
+    return {
+        slotOrder: newOrder,
+        focusedIndex: newFocusedIndex,
+        videoSlots: newVideoSlots,
+    };
+}
+
+test('split mode: dragging featured slot to secondary slot swaps slotOrder and updates focusedIndex', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0; // Slot 0 is featured at position 0
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: false,
+    }));
+
+    // Drag position 0 (slot 0, featured) to position 1 (slot 1, secondary)
+    const result = simulateDragDropSwap({
+        sourcePosition: 0,
+        targetPosition: 1,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'split',
+        focusedIndex,
+        videoSlots,
+    });
+
+    // slotOrder positions 0 and 1 are swapped
+    assert.deepEqual(result.slotOrder, [1, 0, 2, 3]);
+    // focusedIndex is updated to target slot (1) so slot 1 becomes featured!
+    assert.equal(result.focusedIndex, 1);
+});
+
+test('split mode: dragging secondary slot onto featured slot swaps slotOrder and updates focusedIndex', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0; // Slot 0 is featured at position 0
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: false,
+    }));
+
+    // Drag position 2 (slot 2, secondary) onto position 0 (slot 0, featured)
+    const result = simulateDragDropSwap({
+        sourcePosition: 2,
+        targetPosition: 0,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'split',
+        focusedIndex,
+        videoSlots,
+    });
+
+    assert.deepEqual(result.slotOrder, [2, 1, 0, 3]);
+    // focusedIndex is updated to source slot (2) so slot 2 becomes featured!
+    assert.equal(result.focusedIndex, 2);
+});
+
+test('split mode: dragging between two secondary slots swaps positions while preserving focusedIndex', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0; // Slot 0 is featured
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: false,
+    }));
+
+    // Drag position 1 (slot 1) to position 2 (slot 2)
+    const result = simulateDragDropSwap({
+        sourcePosition: 1,
+        targetPosition: 2,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'split',
+        focusedIndex,
+        videoSlots,
+    });
+
+    assert.deepEqual(result.slotOrder, [0, 2, 1, 3]);
+    // focusedIndex remains 0
+    assert.equal(result.focusedIndex, 0);
+});
+
+test('expanded mode: dragging expanded slot to secondary slot updates slotOrder, isExpanded, and focusedIndex', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0;
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: i === 0, // Slot 0 is expanded
+    }));
+
+    // Drag position 0 (slot 0, expanded) to position 2 (slot 2, secondary)
+    const result = simulateDragDropSwap({
+        sourcePosition: 0,
+        targetPosition: 2,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'expanded',
+        focusedIndex,
+        videoSlots,
+    });
+
+    assert.deepEqual(result.slotOrder, [2, 1, 0, 3]);
+    // focusedIndex updated to 2
+    assert.equal(result.focusedIndex, 2);
+    // Slot 2 is now expanded, Slot 0 is not
+    assert.equal(result.videoSlots[2].isExpanded, true);
+    assert.equal(result.videoSlots[0].isExpanded, false);
+});
+
+test('expanded mode: dragging secondary slot onto expanded slot updates slotOrder, isExpanded, and focusedIndex', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0;
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: i === 0,
+    }));
+
+    // Drag position 1 (slot 1, secondary) to position 0 (slot 0, expanded)
+    const result = simulateDragDropSwap({
+        sourcePosition: 1,
+        targetPosition: 0,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'expanded',
+        focusedIndex,
+        videoSlots,
+    });
+
+    assert.deepEqual(result.slotOrder, [1, 0, 2, 3]);
+    assert.equal(result.focusedIndex, 1);
+    assert.equal(result.videoSlots[1].isExpanded, true);
+    assert.equal(result.videoSlots[0].isExpanded, false);
+});
+
+test('grid mode: dragging slots swaps slotOrder without altering focusedIndex or videoSlots', () => {
+    const slotOrder = [0, 1, 2, 3];
+    const focusedIndex = 0;
+    const videoSlots: VideoSlot[] = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://test.com/video${i}`,
+        isExpanded: false,
+    }));
+
+    const result = simulateDragDropSwap({
+        sourcePosition: 0,
+        targetPosition: 1,
+        numSlots: 4,
+        slotOrder,
+        layoutMode: 'grid',
+        focusedIndex,
+        videoSlots,
+    });
+
+    assert.deepEqual(result.slotOrder, [1, 0, 2, 3]);
+    assert.equal(result.focusedIndex, 0);
+    assert.deepEqual(result.videoSlots, videoSlots);
+});
+

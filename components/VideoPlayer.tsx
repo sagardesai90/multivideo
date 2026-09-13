@@ -1873,20 +1873,18 @@ function VideoPlayerComponent({
   );
 }
 
-// Memoize VideoPlayer to prevent unnecessary re-renders when only position changes
-// This is important for drag and drop - we want videos to stay mounted when slotOrder changes
+// Memoize VideoPlayer to prevent unnecessary re-renders
+// Videos remain mounted and stable during drag and drop as keys are based on quadrantIndex and url
 export default React.memo(VideoPlayerComponent, (prevProps, nextProps) => {
-  // Only re-render if URL, quadrantIndex, or other important props change
-  // Ignore position changes as they don't affect the video content
   return (
     prevProps.url === nextProps.url &&
     prevProps.quadrantIndex === nextProps.quadrantIndex &&
+    prevProps.position === nextProps.position &&
     prevProps.isFocused === nextProps.isFocused &&
     prevProps.isExpanded === nextProps.isExpanded &&
     prevProps.isAudioEnabled === nextProps.isAudioEnabled &&
     prevProps.isDraggedOver === nextProps.isDraggedOver &&
     prevProps.isDragging === nextProps.isDragging
-    // Note: We intentionally ignore position changes to prevent reloads during drag and drop
   );
 });
 

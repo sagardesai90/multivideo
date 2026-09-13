@@ -716,6 +716,9 @@ export default function VideoGrid() {
       return;
     }
 
+    const sourceSlot = slotOrder[sourcePosition];
+    const targetSlot = slotOrder[targetPosition];
+
     // Swap slotOrder to swap which slots appear in which positions
     // This keeps slot numbers fixed (position-based) and prevents video reloads
     // because videos stay in their original slots, just move visually
@@ -731,9 +734,53 @@ export default function VideoGrid() {
       return newOrder;
     });
 
-    // focusedIndex tracks slot index, not position, so it doesn't need to change
-    // when we swap positions in slotOrder
-  }, [draggedPosition, numSlots, focusedIndex, slotOrder]);
+    const anyExpanded = videoSlots.some((s) => s.isExpanded);
+    const expandedIndex = videoSlots.findIndex((s) => s.isExpanded);
+
+    if (layoutMode === 'split') {
+      // In split mode, the featured video is determined by focusedIndex
+      if (sourceSlot === focusedIndex) {
+        setFocusedIndex(targetSlot);
+        if (videoSlots[targetSlot]?.url) {
+          setAudioFocusIndex(targetSlot);
+        }
+      } else if (targetSlot === focusedIndex) {
+        setFocusedIndex(sourceSlot);
+        if (videoSlots[sourceSlot]?.url) {
+          setAudioFocusIndex(sourceSlot);
+        }
+      }
+    } else if (layoutMode === 'expanded' || anyExpanded) {
+      // In expanded mode (or if a video is expanded in grid mode),
+      // the featured video is determined by expandedIndex
+      const isSourceFeatured = sourceSlot === expandedIndex || (layoutMode === 'expanded' && sourceSlot === focusedIndex);
+      const isTargetFeatured = targetSlot === expandedIndex || (layoutMode === 'expanded' && targetSlot === focusedIndex);
+
+      if (isSourceFeatured) {
+        setVideoSlots((slots) =>
+          slots.map((slot, i) => ({
+            ...slot,
+            isExpanded: i === targetSlot,
+          }))
+        );
+        setFocusedIndex(targetSlot);
+        if (videoSlots[targetSlot]?.url) {
+          setAudioFocusIndex(targetSlot);
+        }
+      } else if (isTargetFeatured) {
+        setVideoSlots((slots) =>
+          slots.map((slot, i) => ({
+            ...slot,
+            isExpanded: i === sourceSlot,
+          }))
+        );
+        setFocusedIndex(sourceSlot);
+        if (videoSlots[sourceSlot]?.url) {
+          setAudioFocusIndex(sourceSlot);
+        }
+      }
+    }
+  }, [draggedPosition, numSlots, focusedIndex, slotOrder, layoutMode, videoSlots]);
 
   // Global mouse up to cancel drag if released outside a slot
   React.useEffect(() => {
