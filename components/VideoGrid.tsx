@@ -457,7 +457,7 @@ export default function VideoGrid() {
     }
   }, [gridVerticalSplit, gridHorizontalSplit, expandedVerticalSplit, splitHorizontalSplit, isLoaded]);
 
-  // Handle ESC key to exit expand mode
+  // Handle ESC key to exit expand mode and intercept Cmd+W if dispatched
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -465,10 +465,34 @@ export default function VideoGrid() {
           slots.map((slot) => ({ ...slot, isExpanded: false }))
         );
       }
+      // In environments where browser passes Cmd+W to the document
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'w' || e.key === 'W')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, []);
+
+  // Prevent accidental tab closure (Cmd+W, closing tab, or reload)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Setting a non-empty string is required by Chromium/Blink and WebKit to trigger the confirmation dialog
+      const message = 'Are you sure you want to leave this page?';
+      e.returnValue = message;
+      return message;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.onbeforeunload = handleBeforeUnload;
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.onbeforeunload = null;
+    };
   }, []);
 
   // In expanded mode, always keep the focused video expanded
