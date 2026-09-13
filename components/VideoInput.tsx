@@ -18,6 +18,8 @@ interface VideoInputProps {
   singleVideoMode: boolean;
   onToggleSingleVideoMode: () => void;
   onFocusChange?: (index: number) => void;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  focusSlotTrigger?: { slotIndex: number; timestamp: number } | null;
 }
 
 export default function VideoInput({
@@ -35,10 +37,13 @@ export default function VideoInput({
   singleVideoMode,
   onToggleSingleVideoMode,
   onFocusChange,
+  inputRef,
+  focusSlotTrigger,
 }: VideoInputProps) {
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
   const [showCopied, setShowCopied] = useState(false);
+  const internalInputRef = React.useRef<HTMLInputElement>(null);
 
   // Use a ref to track the last position to prevent unnecessary updates
   const lastPositionRef = React.useRef<number>(-1);
@@ -65,6 +70,33 @@ export default function VideoInput({
       setInputUrl(currentUrl);
     }
   }, [selectedQuadrant, videoSlots, slotOrder, numSlots]);
+
+  // Handle explicit slot focus triggers (e.g. clicking on an empty slot in the grid)
+  React.useEffect(() => {
+    if (!focusSlotTrigger) return;
+    const { slotIndex } = focusSlotTrigger;
+    const position = slotOrder.findIndex((index) => index === slotIndex);
+    if (position !== -1 && position < numSlots) {
+      lastPositionRef.current = position;
+      setSelectedQuadrant(position);
+      const currentUrl = videoSlots[slotIndex]?.url || '';
+      setInputUrl(currentUrl);
+    }
+
+    const focusInput = () => {
+      const el = internalInputRef.current;
+      if (el) {
+        el.focus();
+        if (el.value) {
+          el.select();
+        }
+      }
+    };
+
+    focusInput();
+    const timer = setTimeout(focusInput, 50);
+    return () => clearTimeout(timer);
+  }, [focusSlotTrigger, slotOrder, numSlots, videoSlots]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,6 +319,7 @@ export default function VideoInput({
               type="button"
               onClick={() => {
                 setSelectedQuadrant(position);
+                internalInputRef.current?.focus();
                 // In single video mode, immediately switch the focused video
                 // Get the slot index from slotOrder for this position
                 if (singleVideoMode && onFocusChange) {
@@ -307,6 +340,12 @@ export default function VideoInput({
 
         {/* URL Input */}
         <input
+          ref={(el) => {
+            internalInputRef.current = el;
+            if (inputRef) {
+              (inputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+            }
+          }}
           type="text"
           value={inputUrl}
           onChange={(e) => setInputUrl(e.target.value)}

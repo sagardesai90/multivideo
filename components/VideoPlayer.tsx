@@ -11,6 +11,7 @@ interface VideoPlayerProps {
   onFocus: () => void;
   onToggleExpand: () => void;
   onRemove?: () => void;
+  onEmptySlotClick?: () => void;
   isAudioEnabled?: boolean; // Only the focused video should have audio enabled
   isDraggedOver?: boolean; // Whether another slot is being dragged over this one
   isDragging?: boolean; // Whether this slot is currently being dragged
@@ -126,6 +127,7 @@ function VideoPlayerComponent({
   onFocus,
   onToggleExpand,
   onRemove,
+  onEmptySlotClick,
   isAudioEnabled = true,
   isDraggedOver = false,
   isDragging = false,
@@ -1001,9 +1003,14 @@ function VideoPlayerComponent({
     return (
       <div
         className={`relative w-full h-full bg-zinc-950 flex items-center justify-center cursor-pointer transition-all ${emptyDragStateClasses}`}
-        onClick={() => {
+        onClick={(e) => {
+          if (isDragging || isDraggedOver) {
+            e.stopPropagation();
+            return;
+          }
           onFocus();
           handleInteraction();
+          onEmptySlotClick?.();
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -1023,8 +1030,10 @@ function VideoPlayerComponent({
           </div>
         )}
         <div className="text-center px-4 py-4 w-full h-full flex flex-col items-center justify-center">
-          <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-zinc-800/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-zinc-500 text-base font-semibold">{position + 1}</span>
+          <div className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
+            isFocused ? 'bg-green-600/20 ring-2 ring-green-500/50' : 'bg-zinc-800/30'
+          }`}>
+            <span className={`text-base font-semibold ${isFocused ? 'text-green-400' : 'text-zinc-500'}`}>{position + 1}</span>
           </div>
           <p className="text-zinc-400 text-xs">Empty slot</p>
         </div>
