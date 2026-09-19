@@ -640,27 +640,49 @@ export default function VideoGrid() {
       return newSlots;
     });
 
-    // Only update focusedIndex if it's actually changing
-    setFocusedIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+    const anyExpanded = videoSlots.some((s) => s.isExpanded);
+    const isMainVideoLayout = layoutMode === 'expanded' || layoutMode === 'split' || anyExpanded;
+
+    // In expanded or split mode (or if any video is expanded), do NOT change focusedIndex
+    // so secondary slots don't swap into the main/featured video position when loading a link or deleting.
+    if (!isMainVideoLayout) {
+      setFocusedIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+    }
 
     if (url) {
-      setAudioFocusIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+      // In main video layouts, keep audio on the main video if it has a stream
+      if (!isMainVideoLayout || !videoSlots[focusedIndex]?.url || focusedIndex === quadrantIndex) {
+        setAudioFocusIndex((current) => current !== quadrantIndex ? quadrantIndex : current);
+      }
     }
   };
 
   const handleFocusSlot = React.useCallback((slotIndex: number) => {
+    const anyExpanded = videoSlots.some((s) => s.isExpanded);
+    const isMainVideoLayout = layoutMode === 'expanded' || layoutMode === 'split' || anyExpanded;
+
+    // In expanded or split mode, focusing an empty slot should NOT move it into the main video position
+    if (isMainVideoLayout && !videoSlots[slotIndex]?.url) {
+      return;
+    }
+
     setFocusedIndex(slotIndex);
     if (videoSlots[slotIndex]?.url) {
       setAudioFocusIndex(slotIndex);
     }
-  }, [videoSlots]);
+  }, [videoSlots, layoutMode]);
 
   const handleEmptySlotClick = React.useCallback((slotIndex: number) => {
-    handleFocusSlot(slotIndex);
+    const anyExpanded = videoSlots.some((s) => s.isExpanded);
+    const isMainVideoLayout = layoutMode === 'expanded' || layoutMode === 'split' || anyExpanded;
+
+    if (!isMainVideoLayout) {
+      handleFocusSlot(slotIndex);
+    }
     setHideTopBar(false);
     setFocusSlotTrigger({ slotIndex, timestamp: Date.now() });
     urlInputRef.current?.focus();
-  }, [handleFocusSlot]);
+  }, [handleFocusSlot, layoutMode, videoSlots]);
 
   useEffect(() => {
     if (!videoSlots.length) return;
@@ -799,13 +821,19 @@ export default function VideoGrid() {
   const handleToggleExpand = (quadrantIndex: number) => {
     // In split mode, clicking toggles focus instead of expand
     if (layoutMode === 'split') {
-      handleFocusSlot(quadrantIndex);
+      setFocusedIndex(quadrantIndex);
+      if (videoSlots[quadrantIndex]?.url) {
+        setAudioFocusIndex(quadrantIndex);
+      }
       return;
     }
 
     // In expanded mode, clicking always expands the clicked video
     if (layoutMode === 'expanded') {
-      handleFocusSlot(quadrantIndex);
+      setFocusedIndex(quadrantIndex);
+      if (videoSlots[quadrantIndex]?.url) {
+        setAudioFocusIndex(quadrantIndex);
+      }
       setVideoSlots((slots) =>
         slots.map((slot, i) => ({
           ...slot,
