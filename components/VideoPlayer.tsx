@@ -1219,7 +1219,10 @@ function VideoPlayerComponent({
         <div className="relative w-full h-full">
           {/* Only show choice overlay if we don't have a direct HLS stream */}
           {(!hasUserMadeChoice || iframeBlocked) && extractedStream?.type !== 'hls' ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden z-40">
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden z-40"
+              onClick={(e) => e.stopPropagation()}
+            >
               {showHoverLabels && (
                 <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
@@ -1247,10 +1250,12 @@ function VideoPlayerComponent({
                 </div>
                 <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setHasUserMadeChoice(true);
                       setUseProxy(true);
                       setIframeBlocked(false);
+                      handleInteraction();
                     }}
                     className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-1.5"
                   >
@@ -1260,10 +1265,12 @@ function VideoPlayerComponent({
                     <span>Use Proxy (Bypass Blocks)</span>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setHasUserMadeChoice(true);
                       setIframeBlocked(false);
                       setUseProxy(false);
+                      handleInteraction();
                     }}
                     className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-1.5"
                   >
@@ -1273,7 +1280,11 @@ function VideoPlayerComponent({
                     <span>Stream Direct (Your IP)</span>
                   </button>
                   <button
-                    onClick={() => window.open(streamingBaseUrl || url, '_blank')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(streamingBaseUrl || url, '_blank');
+                      handleInteraction();
+                    }}
                     className="w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-zinc-700 flex items-center justify-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1600,7 +1611,10 @@ function VideoPlayerComponent({
         // Try embedding generic URLs as iframes (might be streaming sites)
         <div className="relative w-full h-full">
           {iframeBlocked && !useProxy ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden">
+            <div
+              className="absolute inset-0 flex items-center justify-center bg-black/95 backdrop-blur-sm overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
               {showHoverLabels && (
                 <div className="absolute bottom-16 left-4 bg-black/80 text-white px-3 py-1.5 rounded text-sm font-bold pointer-events-none transition-opacity duration-200 z-20">
                   {position + 1}
@@ -1620,10 +1634,12 @@ function VideoPlayerComponent({
                 </div>
                 <div className="space-y-2 w-full px-4 flex-shrink-0">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       // Try proxy as fallback (may be blocked on Vercel)
                       setUseProxy(true);
                       setIframeBlocked(false);
+                      handleInteraction();
                     }}
                     className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-1.5"
                   >
@@ -1633,10 +1649,12 @@ function VideoPlayerComponent({
                     <span>Try Proxy (May Fail)</span>
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       // Force direct loading - retry with direct iframe
                       setIframeBlocked(false);
                       setUseProxy(false);
+                      handleInteraction();
                     }}
                     className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-blue-900/20 flex items-center justify-center gap-1.5"
                   >
@@ -1646,7 +1664,11 @@ function VideoPlayerComponent({
                     <span>Retry Direct</span>
                   </button>
                   <button
-                    onClick={() => window.open(url, '_blank')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(url, '_blank');
+                      handleInteraction();
+                    }}
                     className="w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 border border-zinc-700 flex items-center justify-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
