@@ -99,6 +99,7 @@ export default function VideoGrid() {
     Array.from({ length: 9 }, () => ({ url: '', isExpanded: false }))
   );
   const [focusedIndex, setFocusedIndex] = useState<number>(0);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0);
   const [audioFocusIndex, setAudioFocusIndex] = useState<number>(0);
   const [hideTopBar, setHideTopBar] = useState<boolean>(false);
   const [isPortrait, setIsPortrait] = useState<boolean>(false);
@@ -679,10 +680,20 @@ export default function VideoGrid() {
     if (!isMainVideoLayout) {
       handleFocusSlot(slotIndex);
     }
+    setSelectedSlotIndex(slotIndex);
     setHideTopBar(false);
     setFocusSlotTrigger({ slotIndex, timestamp: Date.now() });
     urlInputRef.current?.focus();
   }, [handleFocusSlot, layoutMode, videoSlots]);
+
+  // Sync selectedSlotIndex when focusedIndex changes (e.g. expand/minimize, swap)
+  useEffect(() => {
+    setSelectedSlotIndex(focusedIndex);
+  }, [focusedIndex]);
+
+  const handleSlotInteraction = React.useCallback((slotIndex: number) => {
+    setSelectedSlotIndex(slotIndex);
+  }, []);
 
   useEffect(() => {
     if (!videoSlots.length) return;
@@ -897,6 +908,8 @@ export default function VideoGrid() {
           <VideoInput
             inputRef={urlInputRef}
             focusSlotTrigger={focusSlotTrigger}
+            selectedSlotIndex={selectedSlotIndex}
+            onSelectSlot={setSelectedSlotIndex}
             onSetUrl={handleSetUrl}
             focusedIndex={focusedIndex}
             videoSlots={videoSlots}
@@ -1007,6 +1020,7 @@ export default function VideoGrid() {
                     onToggleExpand={() => handleToggleExpand(index)}
                     onRemove={() => handleRemoveAnySlot(index)}
                     onEmptySlotClick={() => handleEmptySlotClick(index)}
+                    onInteract={() => handleSlotInteraction(index)}
                   />
                 </div>
               );
@@ -1235,6 +1249,7 @@ export default function VideoGrid() {
                   isDraggedOver={dragOverPosition === position}
                   isDragging={draggedPosition === position}
                   onEmptySlotClick={() => handleEmptySlotClick(slotIndex)}
+                  onInteract={() => handleSlotInteraction(slotIndex)}
                 />
               </div>
             );

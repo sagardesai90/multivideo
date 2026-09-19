@@ -20,6 +20,8 @@ interface VideoInputProps {
   onFocusChange?: (index: number) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   focusSlotTrigger?: { slotIndex: number; timestamp: number } | null;
+  selectedSlotIndex?: number;
+  onSelectSlot?: (index: number) => void;
 }
 
 export default function VideoInput({
@@ -39,6 +41,8 @@ export default function VideoInput({
   onFocusChange,
   inputRef,
   focusSlotTrigger,
+  selectedSlotIndex,
+  onSelectSlot,
 }: VideoInputProps) {
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
@@ -60,6 +64,18 @@ export default function VideoInput({
       }
     }
   }, [focusedIndex, numSlots, slotOrder]);
+
+  // Update selected quadrant when selectedSlotIndex changes (external slot interaction)
+  React.useEffect(() => {
+    if (selectedSlotIndex === undefined) return;
+    const position = slotOrder.findIndex(index => index === selectedSlotIndex);
+    if (position !== -1 && position < numSlots) {
+      if (lastPositionRef.current !== position) {
+        lastPositionRef.current = position;
+        setSelectedQuadrant(position);
+      }
+    }
+  }, [selectedSlotIndex, numSlots, slotOrder]);
 
   // Update input URL when selected quadrant changes
   // Get the slot index from slotOrder for this position
@@ -313,29 +329,34 @@ export default function VideoInput({
 
         {/* Quadrant Selector */}
         <div className="flex gap-2 flex-shrink-0">
-          {Array.from({ length: numSlots }, (_, i) => i).map((position) => (
-            <button
-              key={position}
-              type="button"
-              onClick={() => {
-                setSelectedQuadrant(position);
-                internalInputRef.current?.focus();
-                // In single video mode, immediately switch the focused video
-                // Get the slot index from slotOrder for this position
-                if (singleVideoMode && onFocusChange) {
+          {Array.from({ length: numSlots }, (_, i) => i).map((position) => {
+            const isSelected = selectedQuadrant === position;
+            return (
+              <button
+                key={position}
+                type="button"
+                onClick={() => {
+                  setSelectedQuadrant(position);
+                  internalInputRef.current?.focus();
                   const slotIndex = slotOrder[position];
-                  onFocusChange(slotIndex);
-                }
-              }}
-              className={`w-10 h-10 rounded-lg font-semibold transition-all ${selectedQuadrant === position
-                ? 'bg-zinc-700 text-white ring-2 ring-zinc-600'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                  onSelectSlot?.(slotIndex);
+                  // In single video mode, immediately switch the focused video
+                  // Get the slot index from slotOrder for this position
+                  if (singleVideoMode && onFocusChange) {
+                    onFocusChange(slotIndex);
+                  }
+                }}
+                className={`w-10 h-10 rounded-lg font-bold transition-all ${
+                  isSelected
+                    ? 'bg-green-600 text-white ring-2 ring-green-400 shadow-md shadow-green-900/40'
+                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white'
                 }`}
-              title={`Quadrant ${position + 1}`}
-            >
-              {position + 1}
-            </button>
-          ))}
+                title={`Slot ${position + 1}`}
+              >
+                {position + 1}
+              </button>
+            );
+          })}
         </div>
 
         {/* URL Input */}

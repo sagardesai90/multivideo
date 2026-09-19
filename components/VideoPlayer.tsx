@@ -15,6 +15,7 @@ interface VideoPlayerProps {
   isAudioEnabled?: boolean; // Only the focused video should have audio enabled
   isDraggedOver?: boolean; // Whether another slot is being dragged over this one
   isDragging?: boolean; // Whether this slot is currently being dragged
+  onInteract?: (slotIndex: number) => void;
 }
 
 function detectVideoType(url: string): string {
@@ -128,6 +129,7 @@ function VideoPlayerComponent({
   onToggleExpand,
   onRemove,
   onEmptySlotClick,
+  onInteract,
   isAudioEnabled = true,
   isDraggedOver = false,
   isDragging = false,
@@ -943,6 +945,7 @@ function VideoPlayerComponent({
 
   // Also show expand button on touch/interaction (for mobile)
   const handleInteraction = useCallback(() => {
+    onInteract?.(quadrantIndex);
     triggerMobileLabels();
     if (!isPortrait) {
       setShowExpandButton(true);
@@ -955,7 +958,20 @@ function VideoPlayerComponent({
         setShowExpandButton(false);
       }, 5000);
     }
-  }, [triggerMobileLabels, isPortrait, error, url]);
+  }, [triggerMobileLabels, isPortrait, onInteract, quadrantIndex]);
+
+  // Detect when user clicks inside iframe (play/pause, settings)
+  useEffect(() => {
+    const handleWindowBlur = () => {
+      setTimeout(() => {
+        if (iframeRef.current && document.activeElement === iframeRef.current) {
+          handleInteraction();
+        }
+      }, 0);
+    };
+    window.addEventListener('blur', handleWindowBlur);
+    return () => window.removeEventListener('blur', handleWindowBlur);
+  }, [handleInteraction]);
 
   const showHoverLabels = isMobileDevice ? showMobileLabels : isHovered;
 
@@ -1081,6 +1097,7 @@ function VideoPlayerComponent({
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={handleInteraction}
       onTouchStart={handleInteraction}
     >
       {/* Drag overlay indicator */}
@@ -1163,6 +1180,10 @@ function VideoPlayerComponent({
             controls
             muted={!isAudioEnabled}
             playsInline
+            onPlay={handleInteraction}
+            onPause={handleInteraction}
+            onVolumeChange={handleInteraction}
+            onPointerDown={handleInteraction}
             {...({ 'webkit-playsinline': 'true' } as any)}
             className="w-full h-full"
             style={{
@@ -1196,6 +1217,10 @@ function VideoPlayerComponent({
             controls
             muted={!isAudioEnabled}
             playsInline
+            onPlay={handleInteraction}
+            onPause={handleInteraction}
+            onVolumeChange={handleInteraction}
+            onPointerDown={handleInteraction}
             {...({ 'webkit-playsinline': 'true' } as any)}
             className="w-full h-full"
             style={{
@@ -1551,6 +1576,7 @@ function VideoPlayerComponent({
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
+                                handleInteraction();
 
                                 // Prevent any navigation warnings by using a clean remount approach
                                 setIsSwitchingServer(true);
@@ -1585,6 +1611,7 @@ function VideoPlayerComponent({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          handleInteraction();
                           setShowServerSelector(true);
                         }}
                         className="bg-black/80 hover:bg-black/90 text-white px-3 py-1.5 rounded text-xs font-semibold transition-all duration-200 shadow-lg flex items-center gap-2 pointer-events-auto"
