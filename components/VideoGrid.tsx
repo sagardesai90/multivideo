@@ -398,14 +398,13 @@ export default function VideoGrid() {
     }
   }, [singleVideoMode, isLoaded]);
 
-  // When numSlots changes, ensure focusedIndex is valid
-  // Note: slotOrder always has 9 elements, we don't need to sync it with numSlots
+  // When numSlots or slotOrder changes, ensure focusedIndex is valid among visible slots
   useEffect(() => {
-    // Ensure focusedIndex is valid for the visible slots
-    if (focusedIndex >= numSlots) {
-      setFocusedIndex(Math.max(0, numSlots - 1));
+    const visibleSlots = slotOrder.slice(0, numSlots);
+    if (visibleSlots.length > 0 && !visibleSlots.includes(focusedIndex)) {
+      setFocusedIndex(visibleSlots[0]);
     }
-  }, [numSlots, focusedIndex]);
+  }, [numSlots, slotOrder, focusedIndex]);
 
   const handleAddSlot = () => {
     if (numSlots < 9) {
@@ -462,11 +461,11 @@ export default function VideoGrid() {
       // Get the slot index at the last visible position
       const slotIndexToRemove = slotOrder[newNumSlots];
 
-      // Clear the slot data for the removed slot (but keep it in its original position)
+      // Clear the slot data for the removed slot (and reset its expanded state)
       // This prevents videos from reloading - they stay in their original slots
       setVideoSlots((slots) =>
         slots.map((slot, i) =>
-          i === slotIndexToRemove ? { ...slot, url: '' } : slot
+          i === slotIndexToRemove ? { ...slot, url: '', isExpanded: false } : slot
         )
       );
 
@@ -483,8 +482,21 @@ export default function VideoGrid() {
 
       // Update numSlots state (this will trigger localStorage save for numSlots)
       setNumSlots(newNumSlots);
-      // focusedIndex adjustment is handled by the numSlots effect
-      // videoSlots update will trigger localStorage save via useEffect
+
+      // Ensure focusedIndex and isExpanded are valid in the remaining visible slots
+      const remainingVisible = slotOrder.slice(0, newNumSlots).filter(idx => idx !== slotIndexToRemove);
+      if (slotIndexToRemove === focusedIndex || !remainingVisible.includes(focusedIndex)) {
+        const fallback = remainingVisible[0] ?? 0;
+        setFocusedIndex(fallback);
+        if (layoutMode === 'expanded') {
+          setVideoSlots((slots) =>
+            slots.map((slot, i) => ({
+              ...slot,
+              isExpanded: i === fallback,
+            }))
+          );
+        }
+      }
     }
   };
 
@@ -497,10 +509,6 @@ export default function VideoGrid() {
     // If slot has a URL, just clear it (don't remove the slot from the grid)
     if (videoSlots[slotIndex]?.url) {
       handleSetUrl(slotIndex, '');
-      // Adjust focusedIndex if it's now out of bounds
-      if (focusedIndex >= numSlots) {
-        setFocusedIndex(Math.max(0, numSlots - 1));
-      }
     }
   };
 
@@ -520,6 +528,9 @@ export default function VideoGrid() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (layoutMode === 'expanded') {
+          setLayoutMode('grid');
+        }
         setVideoSlots((slots) =>
           slots.map((slot) => ({ ...slot, isExpanded: false }))
         );
@@ -533,7 +544,7 @@ export default function VideoGrid() {
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
-  }, []);
+  }, [layoutMode]);
 
   // Prevent accidental tab closure (Cmd+W, closing tab, or reload)
   useEffect(() => {
@@ -767,17 +778,26 @@ export default function VideoGrid() {
       return newOrder;
     });
 
+    const visibleSlotIndices = slotOrder.slice(0, numSlots);
     const anyExpanded = videoSlots.some((s) => s.isExpanded);
-    const expandedIndex = videoSlots.findIndex((s) => s.isExpanded);
+
+    const splitFeatured = visibleSlotIndices.includes(focusedIndex)
+      ? focusedIndex
+      : (visibleSlotIndices[0] ?? 0);
+
+    const expandedSlotCandidate = videoSlots.findIndex((s, idx) => s.isExpanded && visibleSlotIndices.includes(idx));
+    const expandedFeatured = expandedSlotCandidate !== -1
+      ? expandedSlotCandidate
+      : (visibleSlotIndices.includes(focusedIndex) ? focusedIndex : (visibleSlotIndices[0] ?? 0));
 
     if (layoutMode === 'split') {
-      // In split mode, the featured video is determined by focusedIndex
-      if (sourceSlot === focusedIndex) {
+      // In split mode, the featured video is determined by splitFeatured
+      if (sourceSlot === splitFeatured) {
         setFocusedIndex(targetSlot);
         if (videoSlots[targetSlot]?.url) {
           setAudioFocusIndex(targetSlot);
         }
-      } else if (targetSlot === focusedIndex) {
+      } else if (targetSlot === splitFeatured) {
         setFocusedIndex(sourceSlot);
         if (videoSlots[sourceSlot]?.url) {
           setAudioFocusIndex(sourceSlot);
@@ -785,11 +805,8 @@ export default function VideoGrid() {
       }
     } else if (layoutMode === 'expanded' || anyExpanded) {
       // In expanded mode (or if a video is expanded in grid mode),
-      // the featured video is determined by expandedIndex
-      const isSourceFeatured = sourceSlot === expandedIndex || (layoutMode === 'expanded' && sourceSlot === focusedIndex);
-      const isTargetFeatured = targetSlot === expandedIndex || (layoutMode === 'expanded' && targetSlot === focusedIndex);
-
-      if (isSourceFeatured) {
+      // the featured video is determined by expandedFeatured
+      if (sourceSlot === expandedFeatured) {
         setVideoSlots((slots) =>
           slots.map((slot, i) => ({
             ...slot,
@@ -800,7 +817,7 @@ export default function VideoGrid() {
         if (videoSlots[targetSlot]?.url) {
           setAudioFocusIndex(targetSlot);
         }
-      } else if (isTargetFeatured) {
+      } else if (targetSlot === expandedFeatured) {
         setVideoSlots((slots) =>
           slots.map((slot, i) => ({
             ...slot,
@@ -1031,8 +1048,19 @@ export default function VideoGrid() {
           // Multi-video mode: render all slots
           // Render all 9 slots to maintain React key stability - this prevents remounts during drag and drop
           // We use slotOrder to determine which slots are visible and their CSS positioning
+          const visibleSlotIndices = slotOrder.slice(0, numSlots);
           const anyExpanded = videoSlots.some(s => s.isExpanded);
-          const expandedIndex = videoSlots.findIndex(s => s.isExpanded);
+
+          // Determine featured slot for split mode (guaranteed to be visible)
+          const splitFeaturedIndex = visibleSlotIndices.includes(focusedIndex)
+            ? focusedIndex
+            : (visibleSlotIndices[0] ?? 0);
+
+          // Determine featured slot for expanded mode (guaranteed to be visible)
+          const expandedSlotCandidate = videoSlots.findIndex((s, idx) => s.isExpanded && visibleSlotIndices.includes(idx));
+          const expandedFeaturedIndex = expandedSlotCandidate !== -1
+            ? expandedSlotCandidate
+            : (visibleSlotIndices.includes(focusedIndex) ? focusedIndex : (visibleSlotIndices[0] ?? 0));
 
           // Render all 9 slots to keep React keys stable - this prevents remounts during drag and drop
           // We use slotOrder to determine which slots are visible and their CSS positioning
@@ -1072,7 +1100,7 @@ export default function VideoGrid() {
               style = { position: 'absolute', padding: '0.5px', boxSizing: 'border-box' };
               const { sideSlots, bottomSlots } = getSecondarySlotDistribution('split', numSlots);
 
-              if (slotIndex === focusedIndex) {
+              if (slotIndex === splitFeaturedIndex) {
                 // Featured video (top / top-left)
                 if (sideSlots === 0) {
                   style = { ...style, top: 0, left: 0, right: 0, height: `${splitHorizontalSplit}%` };
@@ -1082,7 +1110,7 @@ export default function VideoGrid() {
               } else {
                 // Secondary videos distributed between side column and bottom row
                 const secondaryPositions = Array.from({ length: numSlots }, (_, i) => i)
-                  .filter(p => slotOrder[p] !== focusedIndex);
+                  .filter(p => slotOrder[p] !== splitFeaturedIndex);
                 const secIndex = secondaryPositions.indexOf(position);
 
                 if (secIndex < sideSlots) {
@@ -1109,12 +1137,12 @@ export default function VideoGrid() {
                   };
                 }
               }
-            } else if (anyExpanded) {
+            } else if (layoutMode === 'expanded' || anyExpanded) {
               // Expanded mode (works in both grid and expanded layout modes) with dynamic slot distribution
               style = { position: 'absolute', padding: '0.5px', boxSizing: 'border-box' };
               const { sideSlots, bottomSlots } = getSecondarySlotDistribution('expanded', numSlots);
 
-              if (slotIndex === expandedIndex) {
+              if (slotIndex === expandedFeaturedIndex) {
                 // Featured video (left / top-left)
                 if (bottomSlots === 0) {
                   style = { ...style, top: 0, left: 0, width: `${expandedVerticalSplit}%`, bottom: 0 };
@@ -1124,7 +1152,7 @@ export default function VideoGrid() {
               } else {
                 // Secondary videos distributed between side column and bottom row
                 const secondaryPositions = Array.from({ length: numSlots }, (_, i) => i)
-                  .filter(p => slotOrder[p] !== expandedIndex);
+                  .filter(p => slotOrder[p] !== expandedFeaturedIndex);
                 const secIndex = secondaryPositions.indexOf(position);
 
                 if (secIndex < sideSlots) {
@@ -1241,7 +1269,7 @@ export default function VideoGrid() {
                   quadrantIndex={slotIndex}
                   position={position}
                   isFocused={focusedIndex === slotIndex}
-                  isExpanded={videoSlots[slotIndex].isExpanded}
+                  isExpanded={layoutMode === 'split' ? slotIndex === splitFeaturedIndex : (layoutMode === 'expanded' ? slotIndex === expandedFeaturedIndex : videoSlots[slotIndex].isExpanded)}
                   isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
                   onFocus={() => handleFocusSlot(slotIndex)}
                   onToggleExpand={() => handleToggleExpand(slotIndex)}
@@ -1290,7 +1318,7 @@ export default function VideoGrid() {
           </>
         )}
 
-        {!singleVideoMode && !isPortrait && videoSlots.some(s => s.isExpanded) && layoutMode !== 'split' && numSlots > 1 && (
+        {!singleVideoMode && !isPortrait && (layoutMode === 'expanded' || videoSlots.some(s => s.isExpanded)) && layoutMode !== 'split' && numSlots > 1 && (
           <>
             {/* Vertical splitter dividing left section from right column */}
             <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
