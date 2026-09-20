@@ -1024,6 +1024,7 @@ export default function VideoGrid() {
                     padding: 0,
                     boxSizing: 'border-box',
                   }}
+                  className="relative group"
                 >
                   <VideoPlayer
                     key={`video-player-${index}`}
@@ -1222,8 +1223,11 @@ export default function VideoGrid() {
               >
                 {/* Drag handle - centered at the top for consistent access */}
                 <div
-                  className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/70 hover:bg-black/90 text-white p-2 rounded transition-colors select-none transition-opacity duration-200 ${draggedPosition === position ? 'cursor-grabbing opacity-100' : 'cursor-grab opacity-0 group-hover:opacity-100'
-                    }`}
+                  className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-black/70 hover:bg-black/90 text-white p-2 rounded transition-colors select-none transition-opacity duration-200 ${
+                    draggedPosition === position
+                      ? 'cursor-grabbing opacity-100 pointer-events-auto'
+                      : 'cursor-grab opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'
+                  }`}
                   onMouseDown={(e) => {
                     e.preventDefault(); // Prevent text selection
                     e.stopPropagation();

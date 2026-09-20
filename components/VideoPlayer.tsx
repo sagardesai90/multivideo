@@ -947,7 +947,7 @@ function VideoPlayerComponent({
   const handleInteraction = useCallback(() => {
     onInteract?.(quadrantIndex);
     triggerMobileLabels();
-    if (!isPortrait) {
+    if (isMobileDevice && !isPortrait) {
       setShowExpandButton(true);
       // Clear existing timer
       if (expandButtonTimerRef.current) {
@@ -958,7 +958,7 @@ function VideoPlayerComponent({
         setShowExpandButton(false);
       }, 5000);
     }
-  }, [triggerMobileLabels, isPortrait, onInteract, quadrantIndex]);
+  }, [triggerMobileLabels, isMobileDevice, isPortrait, onInteract, quadrantIndex]);
 
   // Detect when user clicks inside iframe (play/pause, settings)
   useEffect(() => {
@@ -1055,10 +1055,14 @@ function VideoPlayerComponent({
         </div>
 
         {/* Top Control Bar for Empty Slot */}
-        {showExpandButton && onRemove && (
-          <div className="absolute top-0 right-0 p-2 flex justify-end items-start z-20 pointer-events-none">
+        {!isPortrait && onRemove && (
+          <div className={`absolute top-0 right-0 p-2 flex justify-end items-start z-20 pointer-events-none transition-opacity duration-200 ${
+            showExpandButton ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}>
             <button
-              className="bg-zinc-800/80 hover:bg-red-600 text-zinc-400 hover:text-white w-8 h-8 rounded-lg transition-all duration-200 shadow-lg pointer-events-auto flex items-center justify-center backdrop-blur-sm"
+              className={`bg-zinc-800/80 hover:bg-red-600 text-zinc-400 hover:text-white w-8 h-8 rounded-lg transition-all duration-200 shadow-lg flex items-center justify-center backdrop-blur-sm ${
+                showExpandButton ? 'pointer-events-auto' : 'pointer-events-none group-hover:pointer-events-auto'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 onRemove();
@@ -1863,11 +1867,15 @@ function VideoPlayerComponent({
       )}
 
       {/* Top Control Bar - Shows on hover/interaction (hidden in portrait) */}
-      {showExpandButton && (
-        <div className="absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none">
+      {!isPortrait && (
+        <div className={`absolute top-0 left-0 right-0 p-2 flex justify-between items-start z-20 pointer-events-none transition-opacity duration-200 ${
+          showExpandButton ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}>
           {/* Expand/Collapse Button - Top Left */}
           <button
-            className="bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 shadow-lg pointer-events-auto flex items-center gap-1.5 backdrop-blur-sm"
+            className={`bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200 shadow-lg flex items-center gap-1.5 backdrop-blur-sm ${
+              showExpandButton ? 'pointer-events-auto' : 'pointer-events-none group-hover:pointer-events-auto'
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               onToggleExpand();
@@ -1895,7 +1903,9 @@ function VideoPlayerComponent({
           {/* Delete Button - Top Right */}
           {onRemove && (
             <button
-              className={`${confirmDelete ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white'} w-8 h-8 rounded-lg transition-all duration-200 shadow-lg pointer-events-auto flex items-center justify-center backdrop-blur-sm`}
+              className={`${confirmDelete ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white'} w-8 h-8 rounded-lg transition-all duration-200 shadow-lg flex items-center justify-center backdrop-blur-sm ${
+                showExpandButton ? 'pointer-events-auto' : 'pointer-events-none group-hover:pointer-events-auto'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (confirmDelete) {
