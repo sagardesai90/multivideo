@@ -124,6 +124,7 @@ export default function VideoGrid() {
   const [draggedPosition, setDraggedPosition] = useState<number | null>(null);
   const [dragOverPosition, setDragOverPosition] = useState<number | null>(null);
   const slotRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+  const gridContainerRef = React.useRef<HTMLDivElement>(null);
 
   // Adjustable border positions (percentages)
   const [gridVerticalSplit, setGridVerticalSplit] = useState<number>(50); // 50% - vertical split in 2x2 grid
@@ -990,6 +991,7 @@ export default function VideoGrid() {
 
       {/* Responsive Video Grid with adjustable borders */}
       <div
+        ref={gridContainerRef}
         className={`flex-1 bg-zinc-950 ${isPortrait ? 'overflow-y-auto' : 'overflow-hidden'}`}
         style={{
           position: 'relative',
@@ -1295,13 +1297,10 @@ export default function VideoGrid() {
             <div style={{ position: 'absolute', top: `${splitHorizontalSplit}%`, left: 0, right: 0, transform: 'translateY(-50%)', zIndex: 1000 }}>
               <Splitter
                 direction="horizontal"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerHeight = container.clientHeight;
-                  const deltaPercent = (delta / containerHeight) * 100;
-                  setSplitHorizontalSplit(Math.max(20, Math.min(80, splitHorizontalSplit + deltaPercent)));
-                }}
+                containerRef={gridContainerRef}
+                min={20}
+                max={80}
+                onChange={setSplitHorizontalSplit}
               />
             </div>
             {/* Vertical splitter dividing featured video from side column (when side slots exist) */}
@@ -1309,13 +1308,10 @@ export default function VideoGrid() {
               <div style={{ position: 'absolute', top: 0, height: `${splitHorizontalSplit}%`, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
                 <Splitter
                   direction="vertical"
-                  onDrag={(delta) => {
-                    const container = document.querySelector('.flex-1') as HTMLElement;
-                    if (!container) return;
-                    const containerWidth = container.clientWidth;
-                    const deltaPercent = (delta / containerWidth) * 100;
-                    setExpandedVerticalSplit(Math.max(30, Math.min(85, expandedVerticalSplit + deltaPercent)));
-                  }}
+                  containerRef={gridContainerRef}
+                  min={30}
+                  max={85}
+                  onChange={setExpandedVerticalSplit}
                 />
               </div>
             )}
@@ -1328,13 +1324,10 @@ export default function VideoGrid() {
             <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${expandedVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
               <Splitter
                 direction="vertical"
-                onDrag={(delta) => {
-                  const container = document.querySelector('.flex-1') as HTMLElement;
-                  if (!container) return;
-                  const containerWidth = container.clientWidth;
-                  const deltaPercent = (delta / containerWidth) * 100;
-                  setExpandedVerticalSplit(Math.max(30, Math.min(85, expandedVerticalSplit + deltaPercent)));
-                }}
+                containerRef={gridContainerRef}
+                min={30}
+                max={85}
+                onChange={setExpandedVerticalSplit}
               />
             </div>
             {/* Horizontal splitter dividing featured video from bottom row (when bottom slots exist) */}
@@ -1342,13 +1335,10 @@ export default function VideoGrid() {
               <div style={{ position: 'absolute', top: `${splitHorizontalSplit}%`, left: 0, width: `${expandedVerticalSplit}%`, transform: 'translateY(-50%)', zIndex: 1000 }}>
                 <Splitter
                   direction="horizontal"
-                  onDrag={(delta) => {
-                    const container = document.querySelector('.flex-1') as HTMLElement;
-                    if (!container) return;
-                    const containerHeight = container.clientHeight;
-                    const deltaPercent = (delta / containerHeight) * 100;
-                    setSplitHorizontalSplit(Math.max(20, Math.min(80, splitHorizontalSplit + deltaPercent)));
-                  }}
+                  containerRef={gridContainerRef}
+                  min={20}
+                  max={80}
+                  onChange={setSplitHorizontalSplit}
                 />
               </div>
             )}
@@ -1359,13 +1349,10 @@ export default function VideoGrid() {
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${gridVerticalSplit}%`, transform: 'translateX(-50%)', zIndex: 1000 }}>
             <Splitter
               direction="vertical"
-              onDrag={(delta) => {
-                const container = document.querySelector('.flex-1') as HTMLElement;
-                if (!container) return;
-                const containerWidth = container.clientWidth;
-                const deltaPercent = (delta / containerWidth) * 100;
-                setGridVerticalSplit(Math.max(20, Math.min(80, gridVerticalSplit + deltaPercent)));
-              }}
+              containerRef={gridContainerRef}
+              min={20}
+              max={80}
+              onChange={setGridVerticalSplit}
             />
           </div>
         )}
