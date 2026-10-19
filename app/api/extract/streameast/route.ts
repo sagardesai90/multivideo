@@ -93,6 +93,75 @@ function extractServerOptions(html: string, baseUrl: URL): ServerOption[] {
   return servers;
 }
 
+/**
+ * Decode a Streameast `data-e` value: base64 of the embed URL (or iframe HTML)
+ * XOR'd with a single-byte key (0x4F in the site's stream.js).
+ */
+function decodeStreamEmbed(encoded: string, baseUrl: URL): string | null {
+  let binary: string;
+  try {
+    binary = atob(encoded);
+  } catch {
+    return null;
+  }
+  if (!binary) {
+    return null;
+  }
+
+  // Fall back to deriving the key from the expected first character in case the site rotates it
+  const first = binary.charCodeAt(0);
+  const keys = [0x4f, first ^ 'h'.charCodeAt(0), first ^ '<'.charCodeAt(0), first ^ '/'.charCodeAt(0)];
+  for (const key of keys) {
+    const decoded = Array.from(binary, (c) => String.fromCharCode(c.charCodeAt(0) ^ key)).join('').trim();
+    const iframeSrc = decoded.match(/<iframe[^>]*\ssrc=["']([^"']+)["']/i)?.[1];
+    const candidate = (iframeSrc ?? decoded).trim();
+    if (/^(https?:)?\/\//.test(candidate)) {
+      return ensureAbsoluteUrl(candidate, baseUrl);
+    }
+  }
+
+  return null;
+}
+
+function extractStreamButtons(html: string, baseUrl: URL): ServerOption[] {
+  const servers: ServerOption[] = [];
+
+  // Match stream buttons: <button class="stream-btn active" data-e="..." onclick="switchStream(this)">Stream 1</button>
+  const buttonRegex = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
+
+  let match;
+  while ((match = buttonRegex.exec(html)) !== null) {
+    const attrs = match[1];
+    const className = attrs.match(/class=["']([^"']*)["']/i)?.[1] ?? '';
+    if (!/\bstream-btn\b/.test(className)) {
+      continue;
+    }
+
+    const encoded = attrs.match(/data-e=["']([^"']+)["']/i)?.[1];
+    const url = encoded ? decodeStreamEmbed(encoded, baseUrl) : null;
+    if (!url || servers.some((s) => s.url === url)) {
+      continue;
+    }
+
+    servers.push({
+      name: match[2].replace(/<[^>]+>/g, '').trim() || `Stream ${servers.length + 1}`,
+      url,
+      isDefault: /\bactive\b/.test(className),
+    });
+  }
+
+  // Pages with a single stream may only set data-e on the player container
+  if (servers.length === 0) {
+    const encoded = html.match(/data-e=["']([^"']+)["']/i)?.[1];
+    const url = encoded ? decodeStreamEmbed(encoded, baseUrl) : null;
+    if (url) {
+      servers.push({ name: 'Stream 1', url, isDefault: true });
+    }
+  }
+
+  return servers;
+}
+
 export async function GET(request: NextRequest) {
   const inputUrl = request.nextUrl.searchParams.get('url');
 
@@ -107,7 +176,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL provided' }, { status: 400 });
   }
 
-  if (!/streameast|istreameast/i.test(target.hostname)) {
+  // Streameast rotates through mirror domains (streameast, istreameast, streamseaste, ...)
+  if (!/streams?east/i.test(target.hostname)) {
     return NextResponse.json({ error: 'URL must be a Streameast link' }, { status: 400 });
   }
 
@@ -162,7 +232,10 @@ export async function GET(request: NextRequest) {
     }
 
     const html = await response.text();
-    const serverOptions = extractServerOptions(html, target);
+    let serverOptions = extractServerOptions(html, target);
+    if (serverOptions.length === 0) {
+      serverOptions = extractStreamButtons(html, target);
+    }
 
     if (serverOptions.length === 0) {
       return NextResponse.json(
@@ -189,5 +262,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Run on Edge like the proxy route, which can reach Streameast from production
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 

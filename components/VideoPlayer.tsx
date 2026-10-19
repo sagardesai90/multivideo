@@ -18,6 +18,9 @@ interface VideoPlayerProps {
   onInteract?: (slotIndex: number) => void;
 }
 
+// Streameast rotates through mirror domains (streameast, istreameast, streamseaste, ...)
+const STREAMEAST_URL_PATTERN = /streams?east/i;
+
 function detectVideoType(url: string): string {
   if (!url) return 'none';
 
@@ -35,8 +38,7 @@ function detectVideoType(url: string): string {
 
   // Detect streaming sites (check before generic)
   if (lowerUrl.includes('crackstreams') ||
-    lowerUrl.includes('streameast') ||
-    lowerUrl.includes('istreameast') ||
+    STREAMEAST_URL_PATTERN.test(lowerUrl) ||
     lowerUrl.includes('methstreams') ||
     lowerUrl.includes('stream2watch') ||
     lowerUrl.includes('strikeout') ||
@@ -191,8 +193,7 @@ function VideoPlayerComponent({
 
   const isStreameastUrl = useMemo(() => {
     if (!url) return false;
-    const lowerUrl = url.toLowerCase();
-    return lowerUrl.includes('streameast') || lowerUrl.includes('istreameast');
+    return STREAMEAST_URL_PATTERN.test(url);
   }, [url]);
   const sandboxAttributes = 'allow-same-origin allow-scripts allow-forms allow-presentation';
   const mutedTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -236,8 +237,10 @@ function VideoPlayerComponent({
     if (!streamingBaseUrl) return '';
     // Always try direct loading first - browser makes request from user's IP
     // Proxy is only used as fallback if X-Frame-Options blocks embedding
-    return useProxy ? getProxyUrl(streamingBaseUrl, useFallbackProxy) : streamingBaseUrl;
-  }, [streamingBaseUrl, useProxy, useFallbackProxy]);
+    if (!useProxy) return streamingBaseUrl;
+    // Streameast's player only runs on its own origin, so proxy the page that embeds it instead
+    return getProxyUrl(isStreameastUrl && url ? url : streamingBaseUrl, useFallbackProxy);
+  }, [streamingBaseUrl, useProxy, useFallbackProxy, isStreameastUrl, url]);
 
   // Track orientation changes
   useEffect(() => {
@@ -403,6 +406,7 @@ function VideoPlayerComponent({
         'embednow.online',
         'embedstream.tv',
         'embedsports.top', // Streameast embedding domain
+        'embed.st', // Streameast embedding domain
         'embedsports.online',
         'embedstream.top',
       ];
