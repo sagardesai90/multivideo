@@ -501,6 +501,12 @@ export default function VideoGrid() {
     }
   };
 
+  // Select a slot in the header and focus the URL input so a link can be pasted straight in
+  const focusSlotInput = React.useCallback((slotIndex: number) => {
+    setSelectedSlotIndex(slotIndex);
+    setFocusSlotTrigger({ slotIndex, timestamp: Date.now() });
+  }, []);
+
   const handleRemoveAnySlot = (slotIndex: number) => {
     // Validate slot index
     if (slotIndex < 0 || slotIndex >= 9) {
@@ -510,6 +516,8 @@ export default function VideoGrid() {
     // If slot has a URL, just clear it (don't remove the slot from the grid)
     if (videoSlots[slotIndex]?.url) {
       handleSetUrl(slotIndex, '');
+      // Keep the cleared slot selected so a new link can be pasted into it
+      focusSlotInput(slotIndex);
     }
   };
 
@@ -692,11 +700,10 @@ export default function VideoGrid() {
     if (!isMainVideoLayout) {
       handleFocusSlot(slotIndex);
     }
-    setSelectedSlotIndex(slotIndex);
     setHideTopBar(false);
-    setFocusSlotTrigger({ slotIndex, timestamp: Date.now() });
+    focusSlotInput(slotIndex);
     urlInputRef.current?.focus();
-  }, [handleFocusSlot, layoutMode, videoSlots]);
+  }, [handleFocusSlot, focusSlotInput, layoutMode, videoSlots]);
 
   // Sync selectedSlotIndex when focusedIndex changes (e.g. expand/minimize, swap)
   useEffect(() => {
@@ -892,6 +899,21 @@ export default function VideoGrid() {
     });
   };
 
+  // VideoPlayer's memo ignores callback props, so a player can hold callbacks from an older render
+  // (e.g. still on grid layout after switching to split). Call through a ref so they always use the latest state.
+  const slotHandlersRef = React.useRef<Record<
+    'onFocus' | 'onToggleExpand' | 'onRemove' | 'onEmptySlotClick',
+    (slotIndex: number) => void
+  >>({ onFocus: () => {}, onToggleExpand: () => {}, onRemove: () => {}, onEmptySlotClick: () => {} });
+  useEffect(() => {
+    slotHandlersRef.current = {
+      onFocus: handleFocusSlot,
+      onToggleExpand: handleToggleExpand,
+      onRemove: handleRemoveAnySlot,
+      onEmptySlotClick: handleEmptySlotClick,
+    };
+  });
+
   const handleResetLayout = () => {
     // Reset all split positions to default values
     setGridVerticalSplit(50);
@@ -1036,10 +1058,10 @@ export default function VideoGrid() {
                     isFocused={true}
                     isExpanded={false}
                     isAudioEnabled={audioFocusIndex === index && Boolean(videoSlots[index].url)}
-                    onFocus={() => handleFocusSlot(index)}
-                    onToggleExpand={() => handleToggleExpand(index)}
-                    onRemove={() => handleRemoveAnySlot(index)}
-                    onEmptySlotClick={() => handleEmptySlotClick(index)}
+                    onFocus={() => slotHandlersRef.current.onFocus(index)}
+                    onToggleExpand={() => slotHandlersRef.current.onToggleExpand(index)}
+                    onRemove={() => slotHandlersRef.current.onRemove(index)}
+                    onEmptySlotClick={() => slotHandlersRef.current.onEmptySlotClick(index)}
                     onInteract={() => handleSlotInteraction(index)}
                   />
                 </div>
@@ -1277,12 +1299,12 @@ export default function VideoGrid() {
                   isFocused={focusedIndex === slotIndex}
                   isExpanded={layoutMode === 'split' ? slotIndex === splitFeaturedIndex : (layoutMode === 'expanded' ? slotIndex === expandedFeaturedIndex : videoSlots[slotIndex].isExpanded)}
                   isAudioEnabled={audioFocusIndex === slotIndex && Boolean(videoSlots[slotIndex].url)}
-                  onFocus={() => handleFocusSlot(slotIndex)}
-                  onToggleExpand={() => handleToggleExpand(slotIndex)}
-                  onRemove={() => handleRemoveAnySlot(slotIndex)}
+                  onFocus={() => slotHandlersRef.current.onFocus(slotIndex)}
+                  onToggleExpand={() => slotHandlersRef.current.onToggleExpand(slotIndex)}
+                  onRemove={() => slotHandlersRef.current.onRemove(slotIndex)}
                   isDraggedOver={dragOverPosition === position}
                   isDragging={draggedPosition === position}
-                  onEmptySlotClick={() => handleEmptySlotClick(slotIndex)}
+                  onEmptySlotClick={() => slotHandlersRef.current.onEmptySlotClick(slotIndex)}
                   onInteract={() => handleSlotInteraction(slotIndex)}
                 />
               </div>

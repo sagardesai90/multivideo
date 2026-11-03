@@ -87,10 +87,7 @@ export default function VideoInput({
     }
   }, [selectedQuadrant, videoSlots, slotOrder, numSlots]);
 
-  // Handle explicit slot focus triggers (e.g. clicking on an empty slot in the grid)
-  React.useEffect(() => {
-    if (!focusSlotTrigger) return;
-    const { slotIndex } = focusSlotTrigger;
+  const selectTriggeredSlot = React.useEffectEvent((slotIndex: number) => {
     const position = slotOrder.findIndex((index) => index === slotIndex);
     if (position !== -1 && position < numSlots) {
       lastPositionRef.current = position;
@@ -98,6 +95,13 @@ export default function VideoInput({
       const currentUrl = videoSlots[slotIndex]?.url || '';
       setInputUrl(currentUrl);
     }
+  });
+
+  // Handle explicit slot focus triggers (e.g. clicking on an empty slot in the grid)
+  // Only re-run for a new trigger, so later slot changes (like clearing another slot) don't pull the selection back
+  React.useEffect(() => {
+    if (!focusSlotTrigger) return;
+    selectTriggeredSlot(focusSlotTrigger.slotIndex);
 
     const focusInput = () => {
       const el = internalInputRef.current;
@@ -112,7 +116,7 @@ export default function VideoInput({
     focusInput();
     const timer = setTimeout(focusInput, 50);
     return () => clearTimeout(timer);
-  }, [focusSlotTrigger, slotOrder, numSlots, videoSlots]);
+  }, [focusSlotTrigger]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +131,8 @@ export default function VideoInput({
     const slotIndex = slotOrder[selectedQuadrant];
     onSetUrl(slotIndex, '');
     // Input will be cleared by the useEffect when videoSlots updates
+    // Move focus to it before the Clear button unmounts so a new URL can be pasted right away
+    internalInputRef.current?.focus();
   };
 
   const handleRefresh = () => {
