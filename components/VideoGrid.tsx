@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import VideoPlayer from './VideoPlayer';
 import VideoInput from './VideoInput';
 import Splitter from './Splitter';
+import { useWakeLock } from '@/lib/useWakeLock';
 
 interface VideoSlot {
   url: string;
@@ -119,6 +120,20 @@ export default function VideoGrid() {
   // When slots are deleted, we remove them from slotOrder without moving video data
   // This prevents videos from reloading - they stay in their original slots
   const [slotOrder, setSlotOrder] = useState<number[]>([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+
+  // Check if at least one visible slot has an active video loaded
+  const hasActiveVideos = slotOrder.slice(0, numSlots).some((slotIndex) => {
+    const slot = videoSlots[slotIndex];
+    return Boolean(slot && slot.url && slot.url.trim().length > 0);
+  });
+
+  // Screen Wake Lock API management (prevents screen dimming/turning off on iOS Safari and modern browsers)
+  const {
+    isActive: isWakeLockActive,
+    isEnabled: isWakeLockEnabled,
+    toggleKeepAwake,
+    requestWakeLock,
+  } = useWakeLock({ hasActiveVideos });
 
   // Drag and drop state - using custom mouse-based approach for iframe compatibility
   const [draggedPosition, setDraggedPosition] = useState<number | null>(null);
@@ -628,7 +643,12 @@ export default function VideoGrid() {
   }, [hideTopBar]);
 
   // Handle tap anywhere on screen to show controls button (mobile)
-  const handleScreenTap = (e: React.TouchEvent | React.MouseEvent) => {
+  const handleScreenTap = () => {
+    // Re-acquire or confirm wake lock on user screen touch (satisfies iOS user activation)
+    if (isWakeLockEnabled && hasActiveVideos && !isWakeLockActive) {
+      requestWakeLock().catch(() => {});
+    }
+
     if (!hideTopBar) return; // Only work when top bar is hidden
 
     // Show the button on any tap
@@ -646,6 +666,11 @@ export default function VideoGrid() {
   };
 
   const handleSetUrl = (quadrantIndex: number, url: string) => {
+    // Trigger wake lock request on explicit URL submission
+    if (url && url.trim()) {
+      requestWakeLock().catch(() => {});
+    }
+
     // Only update the specific slot to minimize re-renders
     // Use functional update to ensure we're working with the latest state
     setVideoSlots((slots) => {
@@ -992,6 +1017,9 @@ export default function VideoGrid() {
             singleVideoMode={singleVideoMode}
             onToggleSingleVideoMode={() => setSingleVideoMode(!singleVideoMode)}
             onFocusChange={handleFocusSlot}
+            isWakeLockActive={isWakeLockActive}
+            isWakeLockEnabled={isWakeLockEnabled}
+            onToggleWakeLock={toggleKeepAwake}
           />
         </div>
       )}
@@ -1008,6 +1036,12 @@ export default function VideoGrid() {
         >
           <span>⬇️</span>
           <span>Show Controls</span>
+          {isWakeLockActive && (
+            <span
+              className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+              title="Screen awake active"
+            />
+          )}
         </button>
       )}
 

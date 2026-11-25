@@ -22,6 +22,9 @@ interface VideoInputProps {
   focusSlotTrigger?: { slotIndex: number; timestamp: number } | null;
   selectedSlotIndex?: number;
   onSelectSlot?: (index: number) => void;
+  isWakeLockActive?: boolean;
+  isWakeLockEnabled?: boolean;
+  onToggleWakeLock?: () => void;
 }
 
 export default function VideoInput({
@@ -43,6 +46,9 @@ export default function VideoInput({
   focusSlotTrigger,
   selectedSlotIndex,
   onSelectSlot,
+  isWakeLockActive = false,
+  isWakeLockEnabled = true,
+  onToggleWakeLock,
 }: VideoInputProps) {
   const [inputUrl, setInputUrl] = useState('');
   const [selectedQuadrant, setSelectedQuadrant] = useState(focusedIndex);
@@ -230,6 +236,45 @@ export default function VideoInput({
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
           </svg>
         </button>
+
+        {/* Keep Screen Awake Button */}
+        {onToggleWakeLock && (
+          <button
+            type="button"
+            onClick={onToggleWakeLock}
+            className={`w-10 h-10 rounded-lg font-semibold transition-all flex-shrink-0 flex items-center justify-center ${
+              isWakeLockActive
+                ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-400/50 hover:bg-amber-500/30'
+                : isWakeLockEnabled
+                  ? 'bg-zinc-800 text-amber-400/70 hover:bg-zinc-700 hover:text-amber-300'
+                  : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300'
+            }`}
+            title={
+              isWakeLockActive
+                ? 'Screen awake active: Screen will stay on while videos play (click to disable)'
+                : isWakeLockEnabled
+                  ? 'Screen awake standby: Tap screen or play videos to keep awake (click to disable)'
+                  : 'Screen awake disabled: Screen may turn off normally (click to enable)'
+            }
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Sun icon */}
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              {!isWakeLockEnabled && (
+                <line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" strokeWidth="2.5" />
+              )}
+            </svg>
+          </button>
+        )}
 
         {/* Layout Toggle Button */}
         <button
